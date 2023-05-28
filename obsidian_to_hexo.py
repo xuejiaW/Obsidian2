@@ -1,6 +1,5 @@
 ﻿import shutil
 import os
-import frontmatter
 
 from note_path_normalizer import NotePathNormalizer
 from post_content_normalizer import PostContentNormalizer
@@ -25,9 +24,11 @@ class ObsidianToHexo:
         for root, dirs, files in os.walk(self.obsidian_temp_path):
             for file in files:
                 if file.endswith(".md"):
-                    if self.is_post_required_be_published(os.path.join(root, file)):
+                    note_path = os.path.join(root, file)
+                    if PostContentNormalizer.is_post_required_be_published(note_path):
                         post_path = self.create_hexo_page_bundle(root, file)
-                        PostContentNormalizer.normalize_post_content(post_path)
+                        post_content_normalizer = PostContentNormalizer(note_path, post_path)
+                        post_content_normalizer.normalize_post_content()
 
     def create_hexo_page_bundle(self, note_root: str, note: str) -> str:
         note_name = note.replace(".md", '')
@@ -49,11 +50,6 @@ class ObsidianToHexo:
             shutil.copytree(asset_path, dir_path)
 
         return post_path
-
-    @staticmethod
-    def is_post_required_be_published(post_path: str) -> bool:
-        post = frontmatter.load(post_path)
-        return post.metadata.get("published", False)
 
     @staticmethod
     def ignore_git_and_obsidian_folder(folder, names):

@@ -1,17 +1,30 @@
-﻿import re
+﻿import os
+import re
+
+import frontmatter
 
 from note_path_normalizer import NotePathNormalizer
 
 
+def get_absolute_link_path(note_path: str, relative_link: str) -> str:
+    decoded_relative_link = relative_link.replace("%20", " ")
+    md_directory = os.path.dirname(note_path)
+    abs_link_path = os.path.abspath(os.path.join(md_directory, decoded_relative_link))
+    return abs_link_path
+
+
 class PostContentNormalizer:
-    @staticmethod
-    def normalize_post_content(post_path: str) -> None:
-        print(post_path)
-        with open(post_path, "r", encoding="utf-8") as f:
+
+    def __init__(self, note_path: str, post_path: str) -> None:
+        self.note_path = note_path
+        self.post_path = post_path
+
+    def normalize_post_content(self) -> None:
+        with open(self.post_path, "r", encoding="utf-8") as f:
             content = f.read()
-        modified_content = PostContentNormalizer.modify_md_links_in_text(content)
+        modified_content = self.modify_md_links_in_text(content)
         modified_content = PostContentNormalizer.convert_ad_note_to_butterfly_callout(modified_content)
-        with open(post_path, "w", encoding="utf-8") as f:
+        with open(self.post_path, "w", encoding="utf-8") as f:
             f.writelines(modified_content)
 
     @staticmethod
@@ -33,25 +46,31 @@ class PostContentNormalizer:
         converted_text = re.sub(pattern, butterfly_callout, text)
         return converted_text
 
-    @staticmethod
-    def modify_md_links_in_text(text: str) -> str:
+    def modify_md_links_in_text(self, text: str) -> str:
         link_pattern = r'\[(.*?)\]\((.*?)\)'
 
-        modified_text = re.sub(link_pattern, PostContentNormalizer.replace_link, text)
+        modified_text = re.sub(link_pattern, self.replace_link, text)
         return modified_text
 
-    @staticmethod
-    def replace_link(match):
+    def replace_link(self, match):
         link_text = match.group(1)
-        link_path = match.group(2)
+        link_relative_path = match.group(2)
 
-        if link_path.endswith(".md"):
-            link_path = "/" + link_path.split("/")[-1]
-            link_path = link_path.replace(".md", "")
-        if "assets/" in link_path:
-            index_of_assets = link_path.find('assets/')
-            link_path = '/' + link_path[index_of_assets + len('assets/'):]
+        if link_relative_path.endswith(".md"):
+            abs_link_path = get_absolute_link_path(self.note_path, link_relative_path)
+            if not self.is_post_required_be_published(abs_link_path):
+                return link_text
+            link_relative_path = "/" + link_relative_path.split("/")[-1]
+            link_relative_path = link_relative_path.replace(".md", "")
+        if "assets/" in link_relative_path:
+            index_of_assets = link_relative_path.find('assets/')
+            link_relative_path = '/' + link_relative_path[index_of_assets + len('assets/'):]
 
-        link_path = NotePathNormalizer.normalize_post_path(link_path)
-        new_link = f"[{link_text}]({link_path})"
+        link_relative_path = NotePathNormalizer.normalize_post_path(link_relative_path)
+        new_link = f"[{link_text}]({link_relative_path})"
         return new_link
+
+    @staticmethod
+    def is_post_required_be_published(post_path: str) -> bool:
+        post = frontmatter.load(post_path)
+        return post.metadata.get("published", False)
