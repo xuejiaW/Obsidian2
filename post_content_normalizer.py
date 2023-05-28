@@ -10,6 +10,7 @@ class PostContentNormalizer:
         with open(post_path, "r", encoding="utf-8") as f:
             content = f.read()
         modified_content = PostContentNormalizer.modify_md_links_in_text(content)
+        modified_content = PostContentNormalizer.convert_ad_note_to_butterfly_callout(modified_content)
         with open(post_path, "w", encoding="utf-8") as f:
             f.writelines(modified_content)
 
