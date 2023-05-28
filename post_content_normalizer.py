@@ -16,11 +16,19 @@ class PostContentNormalizer:
 
     @staticmethod
     def convert_ad_note_to_butterfly_callout(text: str) -> str:
-        pattern = r'```ad-note\s*([\s\S]*?)```'
+        ad_to_callout_map = {
+            'ad-note': 'info',
+            'ad-tip': 'info',
+            'ad-warning': 'warning',
+            'ad-quote': 'info',
+            'ad-fail': 'danger'
+        }
+        pattern = r'```(ad-(?:note|tip|warning|quote|fail))\s*([\s\S]*?)```'
 
         def butterfly_callout(match):
-            content = match.group(1).strip()
-            return f'{{% note info %}}\n{content}\n{{% endnote %}}'
+            callout_type = ad_to_callout_map.get(match.group(1), 'info')
+            content = match.group(2).strip()
+            return f'{{% note {callout_type} %}}\n{content}\n{{% endnote %}}'
 
         converted_text = re.sub(pattern, butterfly_callout, text)
         return converted_text
