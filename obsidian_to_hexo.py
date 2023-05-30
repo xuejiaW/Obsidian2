@@ -48,6 +48,11 @@ class ObsidianToHexo:
             if os.path.exists(dir_path):
                 shutil.rmtree(dir_path)
             shutil.copytree(asset_path, dir_path)
+            for root, _, files in os.walk(dir_path):
+                for file in files:
+                    old_file_path = os.path.join(root, file)
+                    new_file_path = os.path.join(root, file.lower())
+                    shutil.move(old_file_path, new_file_path)
 
         return post_path
 

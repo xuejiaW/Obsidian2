@@ -80,5 +80,6 @@ class PostContentNormalizer:
 
     @staticmethod
     def is_post_required_be_published(post_path: str) -> bool:
+        print(post_path)
         post = frontmatter.load(post_path)
         return post.metadata.get("published", False)
