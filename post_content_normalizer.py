@@ -61,7 +61,7 @@ class PostContentNormalizer:
             if "#" in link_relative_path:  # handle link for title
                 link_relative_path, fragment = link_relative_path.split("#", 1)
                 fragment = NotePathNormalizer.normalize_fragment(fragment)
-                fragment = "#" + fragment
+                fragment = "/#" + fragment
             abs_link_path = get_absolute_link_path(self.note_path, link_relative_path)
             if not self.is_post_required_be_published(abs_link_path):
                 return link_text
@@ -75,7 +75,7 @@ class PostContentNormalizer:
 
         link_relative_path = NotePathNormalizer.normalize_post_path(link_relative_path)
 
-        new_link = f"[{link_text}]({link_relative_path}/{fragment})"
+        new_link = f"[{link_text}]({link_relative_path}{fragment})"
         return new_link
 
     @staticmethod
