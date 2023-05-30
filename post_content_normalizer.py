@@ -48,7 +48,6 @@ class PostContentNormalizer:
 
     def modify_md_links_in_text(self, text: str) -> str:
         link_pattern = r'\[(.*?)\]\((.*?)\)'
-
         modified_text = re.sub(link_pattern, self.replace_link, text)
         return modified_text
 
@@ -56,18 +55,27 @@ class PostContentNormalizer:
         link_text = match.group(1)
         link_relative_path = match.group(2)
 
-        if link_relative_path.endswith(".md"):
+        fragment = ""
+
+        if ".md" in link_relative_path:
+            if "#" in link_relative_path:  # handle link for title
+                link_relative_path, fragment = link_relative_path.split("#", 1)
+                fragment = NotePathNormalizer.normalize_fragment(fragment)
+                fragment = "#" + fragment
             abs_link_path = get_absolute_link_path(self.note_path, link_relative_path)
             if not self.is_post_required_be_published(abs_link_path):
                 return link_text
+
             link_relative_path = "/" + link_relative_path.split("/")[-1]
             link_relative_path = link_relative_path.replace(".md", "")
+
         if "assets/" in link_relative_path:
             index_of_assets = link_relative_path.find('assets/')
             link_relative_path = '/' + link_relative_path[index_of_assets + len('assets/'):]
 
         link_relative_path = NotePathNormalizer.normalize_post_path(link_relative_path)
-        new_link = f"[{link_text}]({link_relative_path})"
+
+        new_link = f"[{link_text}]({link_relative_path}/{fragment})"
         return new_link
 
     @staticmethod

@@ -2,9 +2,15 @@
 
 
 class NotePathNormalizer:
+
     @staticmethod
-    def normalize_post_path(text: str) -> str:
-        ret = NotePathNormalizer.make_chinese_to_pinyin(text)
+    def normalize_fragment(fragment: str) -> str:
+        ret = NotePathNormalizer.make_space_to_underscore(fragment)
+        return ret
+
+    @staticmethod
+    def normalize_post_path(path: str) -> str:
+        ret = NotePathNormalizer.make_chinese_to_pinyin(path)
         ret = NotePathNormalizer.make_space_to_underscore(ret)
         ret = NotePathNormalizer.make_to_lowercase(ret)
         return ret
