@@ -69,6 +69,11 @@ class PostContentNormalizer:
             link_relative_path = "/" + link_relative_path.split("/")[-1]
             link_relative_path = link_relative_path.replace(".md", "")
 
+        if link_relative_path.startswith("#"):
+            fragment = NotePathNormalizer.normalize_fragment(link_relative_path[1:])
+            fragment = "/#" + fragment
+            link_relative_path = "/" + os.path.basename(self.post_path).replace(".md", "")
+
         if "assets/" in link_relative_path:
             index_of_assets = link_relative_path.find('assets/')
             link_relative_path = '/' + link_relative_path[index_of_assets + len('assets/'):]
