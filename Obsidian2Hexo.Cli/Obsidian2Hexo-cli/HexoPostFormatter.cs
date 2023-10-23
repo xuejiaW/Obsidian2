@@ -18,6 +18,7 @@ internal class HexoPostFormatter
         string content = File.ReadAllText(m_SrcNotePath);
         string ret = FormatMdLinkToHexoStyle(content);
         ret = FormatCodeBlockAdmonitionsToButterflyStyle(ret);
+        ret = FormatMkDocsAdmonitionsToButterflyStyle(ret);
         File.WriteAllText(m_DstPostPath, ret);
     }
 
@@ -32,9 +33,7 @@ internal class HexoPostFormatter
             string linkText = match.Groups[1].Value;
             string linkRelativePath = match.Groups[2].Value;
 
-            string link = HexoPostStyleAdapter.AdaptLink(linkText, linkRelativePath, m_SrcNotePath, m_DstPostPath);
-
-            return link;
+            return HexoPostStyleAdapter.AdaptLink(linkText, linkRelativePath, m_SrcNotePath, m_DstPostPath);
         }
     }
 
@@ -58,7 +57,30 @@ internal class HexoPostFormatter
             return HexoPostStyleAdapter.AdaptAdmonition(callout, calloutType);
         }
 
-        string convertedText = Regex.Replace(content, pattern, ReplaceAdmonition);
-        return convertedText;
+        return Regex.Replace(content, pattern, ReplaceAdmonition);
+    }
+
+    private string FormatMkDocsAdmonitionsToButterflyStyle(string content)
+    {
+        var mkDocsAdMap = new Dictionary<string, string>
+        {
+            {"note", "info"},
+            {"tip", "primary"},
+            {"warning", "warning"},
+            {"quote", "info"},
+            {"fail", "danger"}
+        };
+
+        string pattern = @"^> \[!(Note|warning|tip|quote|fail)]\r?\n> ((.*?)(?:\r?\n(?=>)|$))+";
+        var regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Multiline);
+
+        return regex.Replace(content, ReplaceAdmonition);
+
+        string ReplaceAdmonition(Match match)
+        {
+            string calloutType = mkDocsAdMap.TryGetValue(match.Groups[1].Value, out string type) ? type : "info";
+            string callout = string.Join("\n", match.Groups[2].Captures.Select(x => x.Value.Replace("> ", "")));
+            return HexoPostStyleAdapter.AdaptAdmonition(callout, calloutType);
+        }
     }
 }
