@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace Obsidian2Hexo;
+﻿namespace Obsidian2Hexo;
 
 internal class Obsidian2HexoHandler
 {
@@ -28,17 +26,29 @@ internal class Obsidian2HexoHandler
     private void ConvertObsidianNoteToHexoPostBundles()
     {
         Directory.GetFiles(m_ObsidianTempDir.FullName, "*.md", SearchOption.AllDirectories)
-                 .Where(file => file.EndsWith(".md")).ToList().ForEach(file =>
+                 .Where(file => file.EndsWith(".md")).ToList().ForEach(notePath =>
                   {
-                      Console.WriteLine($"Handle file is {file}");
-                      var generator = new HexoPostGenerator(file, m_HexoPostsDir);
-                      string postPath = generator.Generate();
+                      Console.WriteLine($"Handle file is {notePath}");
+                      var generator = new HexoPostGenerator(notePath, m_HexoPostsDir);
+                      bool requiredToBePublished = generator.Generate(out string postPath);
+                      if (!requiredToBePublished) return;
 
-                      if (!string.IsNullOrEmpty(postPath))
-                      {
-                          var formatter = new HexoPostFormatter(file, postPath);
-                          formatter.Format();
-                      }
+                      var formatter = new HexoPostFormatter(notePath, postPath);
+                      formatter.Format();
+
+                      CopyAssetIfExist(notePath);
                   });
+
+        void CopyAssetIfExist(string notePath)
+        {
+            string noteName = Path.GetFileNameWithoutExtension(notePath);
+            string noteAssetsDir = Path.GetDirectoryName(notePath) + @"\assets\" + noteName;
+
+            if (!Path.Exists(noteAssetsDir)) return;
+
+            string postAssetsDir = HexoPostStyleAdapter.AdaptPostPath(m_HexoPostsDir + "\\" + noteName);
+            if (Directory.Exists(postAssetsDir)) Directory.Delete(postAssetsDir, true);
+            new DirectoryInfo(noteAssetsDir).DeepCopy(postAssetsDir);
+        }
     }
 }

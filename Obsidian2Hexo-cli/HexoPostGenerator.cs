@@ -16,10 +16,12 @@ internal class HexoPostGenerator
         m_PostsDir = postDir;
     }
 
-    public string Generate()
+    public bool Generate(out string notePath)
     {
-        if (!ObsidianNoteParser.IsRequiredToBePublished(m_NotePath)) return null;
-        return CreateHexoPostBundle(m_NotePath);
+        notePath = null;
+        if (!ObsidianNoteParser.IsRequiredToBePublished(m_NotePath)) return false;
+        notePath = CreateHexoPostBundle(m_NotePath);
+        return true;
     }
 
 
