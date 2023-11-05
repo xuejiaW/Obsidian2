@@ -6,6 +6,9 @@
         <RootNamespace>Obsidian2Hexo_cli</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>obsidian2hexo</ToolCommandName>
+        <PackageOutputPath>./nupkg</PackageOutputPath>
     </PropertyGroup>
 
     <ItemGroup>
