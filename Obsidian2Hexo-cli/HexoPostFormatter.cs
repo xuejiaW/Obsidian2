@@ -67,11 +67,16 @@ internal class HexoPostFormatter
             {"note", "info"},
             {"tip", "primary"},
             {"warning", "warning"},
-            {"quote", "info"},
-            {"fail", "danger"}
+            {"fail", "danger"},
+            {"quote", "'fas fa-quote-left'"},
+            {"cite", "'fas fa-quote-left'"},
         };
 
-        string pattern = @"^> \[!(Note|warning|tip|quote|fail)]\r?\n> ((.*?)(?:\r?\n(?=>)|$))+";
+        string onlySymbolLinePattern = @"^>\s*$";
+        content = Regex.Replace(content, onlySymbolLinePattern, "", RegexOptions.Multiline);
+
+        string supportedAdmonitions = string.Join("|", mkDocsAdMap.Keys);
+        string pattern = $@"^> \[!({supportedAdmonitions})][\r?\n]+> ((.*?)(?:\r?\n(?=>)|$))+";
         var regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Multiline);
 
         return regex.Replace(content, ReplaceAdmonition);
