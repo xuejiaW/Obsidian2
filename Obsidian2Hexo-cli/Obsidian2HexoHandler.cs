@@ -33,7 +33,7 @@ internal class Obsidian2HexoHandler
                       bool requiredToBePublished = generator.Generate(out string postPath);
                       if (!requiredToBePublished) return;
 
-                      var formatter = new HexoPostFormatter(notePath, postPath);
+                      var formatter = new HexoPostFormatter(notePath, postPath, m_ObsidianTempDir.FullName);
                       formatter.Format();
 
                       CopyAssetIfExist(notePath);

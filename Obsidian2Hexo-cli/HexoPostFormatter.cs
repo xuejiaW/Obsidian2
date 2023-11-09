@@ -6,20 +6,50 @@ internal class HexoPostFormatter
 {
     private string m_SrcNotePath = null;
     private string m_DstPostPath = null;
+    private string m_SrcNoteFolderPath = null;
 
-    public HexoPostFormatter(string srcNotePath, string dstPostPath)
+    public HexoPostFormatter(string srcNotePath, string dstPostPath, string srcNoteFolderPath)
     {
         m_SrcNotePath = srcNotePath;
         m_DstPostPath = dstPostPath;
+        m_SrcNoteFolderPath = srcNoteFolderPath;
     }
 
     public void Format()
     {
         string content = File.ReadAllText(m_SrcNotePath);
-        string ret = FormatMdLinkToHexoStyle(content);
+        string ret = FormatBlockLink(content);
+        ret = FormatMdLinkToHexoStyle(ret);
         ret = FormatCodeBlockAdmonitionsToButterflyStyle(ret);
         ret = FormatMkDocsAdmonitionsToButterflyStyle(ret);
         File.WriteAllText(m_DstPostPath, ret);
+    }
+
+    private string FormatBlockLink(string content)
+    {
+        string pattern = @"!\[(.*?)\]\((.*?.md)#(\^[a-zA-Z0-9]{6})\)";
+        string ret = Regex.Replace(content, pattern, ReplaceBlockLink);
+        return ret;
+
+        string ReplaceBlockLink(Match match)
+        {
+            string linkText = match.Groups[1].Value;
+            string linkRelativePath = match.Groups[2].Value;
+            string blockId = match.Groups[3].Value;
+            string targetNotePath = $"{m_SrcNoteFolderPath}{linkRelativePath}".Replace("%20", " ");
+            if (File.Exists(targetNotePath))
+            {
+                string blockContent = File.ReadAllLines(targetNotePath).ToList()
+                                          .First(line => line.EndsWith(blockId)).Replace(blockId, "");
+                return $"""
+                        > {blockContent}
+                        > ———— {linkText}
+                        """;
+            }
+
+            Console.WriteLine($"Not Found for path {linkRelativePath}");
+            return "";
+        }
     }
 
     private string FormatMdLinkToHexoStyle(string content)

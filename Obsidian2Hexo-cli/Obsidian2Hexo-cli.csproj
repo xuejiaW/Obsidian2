@@ -8,6 +8,7 @@
         <Nullable>disable</Nullable>
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>obsidian2hexo</ToolCommandName>
+        <Version> 1.0.1 </Version>
         <PackageOutputPath>./nupkg</PackageOutputPath>
     </PropertyGroup>
 
