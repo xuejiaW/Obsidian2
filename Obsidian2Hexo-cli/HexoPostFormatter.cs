@@ -88,7 +88,7 @@ internal class HexoPostFormatter
 
     private string FormatCodeBlockAdmonitionsToButterflyStyle(string content)
     {
-        var codeBlockAdMap = new Dictionary<string, string>
+        var codeBlockAdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             {"ad-note", "info"},
             {"ad-tip", "info"},
@@ -111,7 +111,7 @@ internal class HexoPostFormatter
 
     private string FormatMkDocsAdmonitionsToButterflyStyle(string content)
     {
-        var mkDocsAdMap = new Dictionary<string, string>
+        var mkDocsAdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             {"note", "info"},
             {"tip", "primary"},
