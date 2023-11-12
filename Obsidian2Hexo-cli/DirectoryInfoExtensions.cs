@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace Obsidian2Hexo;
+﻿namespace Obsidian2Hexo;
 
 public static class DirectoryInfoExtensions
 {

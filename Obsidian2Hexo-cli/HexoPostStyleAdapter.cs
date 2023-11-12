@@ -1,4 +1,4 @@
-﻿using System.Reflection.Metadata.Ecma335;
+﻿using System.Data;
 using System.Text;
 using TinyPinyin;
 
@@ -55,15 +55,13 @@ internal static class HexoPostStyleAdapter
             if (!ObsidianNoteParser.IsRequiredToBePublished(absLinkPath)) return linkText;
 
             // As all posts are in the same directory, we can just use the file name as the link path.
-            linkRelativePath = "/" + linkRelativePath.Split("/")[^1];
-            linkRelativePath = linkRelativePath.Replace(".md", "");
+            linkRelativePath = ConvertMdLink2Relative(absLinkPath);
         }
 
         if (linkRelativePath.StartsWith("#"))
         {
-            fragment = AdaptTitleFragment(linkRelativePath[1..]);
-            fragment = "/#" + fragment;
-            linkRelativePath = "/" + Path.GetFileName(postPath).Replace(".md", "");
+            fragment = "/#" + AdaptTitleFragment(linkRelativePath[1..]);
+            linkRelativePath = ConvertMdLink2Relative(postPath);
         }
 
         // For Obsidian Notes, if the note is ABC.md, the assets dir would be assets/abc
@@ -76,9 +74,7 @@ internal static class HexoPostStyleAdapter
         }
 
         linkRelativePath = AdaptPostPath(linkRelativePath);
-        string ret = $"[{linkText}]({linkRelativePath}{fragment})";
-
-        return ret;
+        return $"[{linkText}]({linkRelativePath}{fragment})";
 
         string AdaptTitleFragment(string path) { return ConvertSpaceToUnderScore(path); }
     }
@@ -86,6 +82,11 @@ internal static class HexoPostStyleAdapter
     public static string AdaptAdmonition(string callout, string type)
     {
         return $"{{% note {type} %}}\n{callout}\n{{% endnote %}}";
+    }
+
+    public static string ConvertMdLink2Relative(string filePath)
+    {
+        return "/" + Path.GetFileNameWithoutExtension(filePath);
     }
 
     private static string ConvertSpaceToUnderScore(string path)

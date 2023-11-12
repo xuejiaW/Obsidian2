@@ -1,9 +1,4 @@
-﻿using System.Text;
-using TinyPinyin;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
-
-namespace Obsidian2Hexo;
+﻿namespace Obsidian2Hexo;
 
 internal class HexoPostGenerator
 {
