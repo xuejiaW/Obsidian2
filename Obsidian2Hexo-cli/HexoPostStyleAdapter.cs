@@ -76,7 +76,7 @@ internal static class HexoPostStyleAdapter
         linkRelativePath = AdaptPostPath(linkRelativePath);
         return $"[{linkText}]({linkRelativePath}{fragment})";
 
-        string AdaptTitleFragment(string path) { return ConvertSpaceToUnderScore(path); }
+        string AdaptTitleFragment(string path) { return ConvertDotToUnderScore(ConvertSpaceToUnderScore(path)); }
     }
 
     public static string AdaptAdmonition(string callout, string type)
@@ -96,4 +96,6 @@ internal static class HexoPostStyleAdapter
 
         return ret;
     }
+
+    private static string ConvertDotToUnderScore(string path) { return path.Replace(".", "_"); }
 }
