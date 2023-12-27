@@ -18,7 +18,7 @@ internal class HexoPostFormatter
     public void Format()
     {
         string content = File.ReadAllText(m_SrcNotePath);
-        string ret = FormatBlockLink(content);
+        string ret = FormatBlockLink(content, m_SrcNotePath);
         ret = CleanBlockLinkMark(ret);
         ret = FormatMdLinkToHexoStyle(ret);
         ret = FormatCodeBlockAdmonitionsToButterflyStyle(ret);
@@ -26,7 +26,7 @@ internal class HexoPostFormatter
         File.WriteAllText(m_DstPostPath, ret);
     }
 
-    private string FormatBlockLink(string content)
+    private string FormatBlockLink(string content, string srcNotePath)
     {
         // Block Link's path is related to the vault path, not the note path.
 
@@ -41,17 +41,23 @@ internal class HexoPostFormatter
             string targetNotePath
                 = ObsidianNoteParser.GetNotePathBasedOnFolder(Obsidian2HexoHandler.obsidianTempDir.FullName,
                                                               linkRelativePath);
+
+            if (!File.Exists(targetNotePath))
+                targetNotePath = ObsidianNoteParser.GetAbsoluteLinkPath(srcNotePath, linkRelativePath);
+
             if (File.Exists(targetNotePath))
             {
                 string blockContent = File.ReadAllLines(targetNotePath).ToList()
                                           .First(line => line.EndsWith(blockId)).Replace(blockId, "");
+
                 return $"""
                         > {blockContent}
                         > ———— {GetReferenceLink()}
                         """;
             }
 
-            Console.WriteLine($"Not Found for path {linkRelativePath}");
+            Console.WriteLine($"Not Found for relative path {linkRelativePath}");
+            Console.WriteLine($"Not Found for absolute path {targetNotePath}");
             return "";
 
             string GetReferenceLink()
@@ -116,6 +122,7 @@ internal class HexoPostFormatter
             {"note", "info"},
             {"tip", "primary"},
             {"warning", "warning"},
+            {"caution", "warning"},
             {"fail", "danger"},
             {"quote", "'fas fa-quote-left'"},
             {"cite", "'fas fa-quote-left'"},
