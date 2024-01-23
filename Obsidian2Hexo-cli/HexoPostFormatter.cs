@@ -126,6 +126,8 @@ internal class HexoPostFormatter
             {"fail", "danger"},
             {"quote", "'fas fa-quote-left'"},
             {"cite", "'fas fa-quote-left'"},
+            {"example", "'fas fa-list'"},
+            {"tldr", "'fas fa-clipboard-list'"},
         };
 
         string onlySymbolLinePattern = @"^>\s*$";
