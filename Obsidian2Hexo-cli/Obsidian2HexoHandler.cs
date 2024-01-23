@@ -17,7 +17,7 @@ internal class Obsidian2HexoHandler
     {
         if (obsidianTempDir.Exists)
             obsidianTempDir.Delete(true);
-        obsidianVaultDir.DeepCopy(obsidianTempDir.FullName, new List<string> {".obsidian", ".git"});
+        obsidianVaultDir.DeepCopy(obsidianTempDir.FullName, new List<string> {".obsidian", ".git", ".trash"});
         ConvertObsidianNoteToHexoPostBundles();
         obsidianTempDir.Delete(true);
         Console.WriteLine("Convert Completed");
