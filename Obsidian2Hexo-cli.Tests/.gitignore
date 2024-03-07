@@ -1,0 +1,17 @@
+# .NET Core
+nupkg
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+bin/
+obj/
+
+## Other files and folders
+*.swp
+*~
+[Tt]humbs.db
+[Dd]esktop.ini
+*.log
+*.vs/
