@@ -18,11 +18,11 @@ internal class HexoPostFormatter
     public void Format()
     {
         string content = File.ReadAllText(m_SrcNotePath);
-        string ret = FormatBlockLink(content, m_SrcNotePath);
+        string ret = AdmonitionsFormatter.FormatCodeBlockStyle2ButterflyStyle(content);
+        ret = AdmonitionsFormatter.FormatMkDocsStyle2ButterflyStyle(ret);
+        ret = FormatBlockLink(ret, m_SrcNotePath);
         ret = CleanBlockLinkMark(ret);
         ret = FormatMdLinkToHexoStyle(ret);
-        ret = AdmonitionsFormatter.FormatCodeBlockStyle2ButterflyStyle(ret);
-        ret = AdmonitionsFormatter.FormatMkDocsStyle2ButterflyStyle(ret);
         File.WriteAllText(m_DstPostPath, ret);
     }
 
@@ -50,11 +50,12 @@ internal class HexoPostFormatter
                 string blockContent = File.ReadAllLines(targetNotePath).ToList()
                                           .First(line => line.EndsWith(blockId)).Replace(blockId, "");
 
-                return $"""
-                        > [!quote]
-                        > {blockContent}
-                        > ———— {GetReferenceLink()}
-                        """;
+                string quoteContent = $"""
+                                       {blockContent}
+                                       ———— {GetReferenceLink()}
+                                       """;
+
+                return Adapter.AdaptAdmonition(quoteContent, "'fas fa-quote-left'");
             }
 
             Console.WriteLine($"Not Found for relative path {linkRelativePath}");
@@ -92,5 +93,4 @@ internal class HexoPostFormatter
             return HexoPostStyleAdapter.AdaptLink(linkText, linkRelativePath, m_SrcNotePath, m_DstPostPath);
         }
     }
-
 }
