@@ -79,9 +79,9 @@ internal static class HexoPostStyleAdapter
         string AdaptTitleFragment(string path) { return ConvertDotToUnderScore(ConvertSpaceToUnderScore(path)); }
     }
 
-    public static string AdaptAdmonition(string callout, string type)
+    public static string AdaptAdmonition(string calloutContent, string type)
     {
-        return $"{{% note {type} %}}\n{callout}\n{{% endnote %}}";
+        return $"{{% note {type} %}}\n{calloutContent}\n{{% endnote %}}";
     }
 
     public static string ConvertMdLink2Relative(string filePath)
