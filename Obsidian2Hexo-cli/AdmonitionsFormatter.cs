@@ -10,9 +10,9 @@ internal static class AdmonitionsFormatter
         var codeBlockAdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             {"ad-note", "info"},
-            {"ad-tip", "info"},
+            {"ad-tip", "primary"},
             {"ad-warning", "warning"},
-            {"ad-quote", "info"},
+            {"ad-quote", "'fas fa-quote-left'"},
             {"ad-fail", "danger"}
         };
 
@@ -56,10 +56,8 @@ internal static class AdmonitionsFormatter
                 string calloutType = mkDocsAdMap.GetValueOrDefault(type, "info");
                 admonitionStack.Push((calloutType, new List<string>()));
             }
-            else if (IsAdmonitionLine(line, out int level))
+            else if (IsAdmonitionLine(line, out int level) && admonitionStack.Count != 0)
             {
-                if (admonitionStack.Count <= 0) return; // Line begin with > but not in any admonition block
-
                 // if the level changed, which means the current block is finished
                 // Thus, we should pop the block and format it
                 if (level != admonitionStack.Count && admonitionStack.Count > 1)
@@ -77,7 +75,8 @@ internal static class AdmonitionsFormatter
             {
                 // If the line is not in an admonition block, which means all the blocks are finished
                 // Thus, we should format all the blocks in the stack
-                FormatAdmonitionStack();
+                if (admonitionStack.Count != 0)
+                    FormatAdmonitionStack();
 
                 // This line is not in any block, just add it to the result
                 result.AppendLine(line);
@@ -121,20 +120,20 @@ internal static class AdmonitionsFormatter
             type = match.Success ? match.Groups[2].Value : null;
             return match.Success;
         }
-    }
 
-    public static bool IsAdmonitionLine(string line, out int level)
-    {
-        string pattern = @"^(\s*>\s*)+";
-        Match match = Regex.Match(line, pattern);
-        level = 0;
-        for (int i = 0; i != line.Length; ++i)
+        bool IsAdmonitionLine(string line, out int level)
         {
-            char c = line[i];
-            if (c != ' ' && c != '>') break;
-            if (c == '>') level++;
-        }
+            string pattern = @"^(\s*>\s*)+";
+            Match match = Regex.Match(line, pattern);
+            level = 0;
+            for (int i = 0; i != line.Length; ++i)
+            {
+                char c = line[i];
+                if (c != ' ' && c != '>') break;
+                if (c == '>') level++;
+            }
 
-        return match.Success;
+            return match.Success;
+        }
     }
 }
