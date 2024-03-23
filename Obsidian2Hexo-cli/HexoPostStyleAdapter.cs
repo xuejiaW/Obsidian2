@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text;
+using System.Text.RegularExpressions;
 using TinyPinyin;
 
 namespace Obsidian2Hexo;
@@ -71,6 +72,11 @@ internal static class HexoPostStyleAdapter
         {
             int indexOfAssets = linkRelativePath.IndexOf("assets/", StringComparison.Ordinal);
             linkRelativePath = '/' + linkRelativePath[(indexOfAssets + "assets/".Length)..];
+            
+            // if link text is end with sth like |500, delete the |500 part
+            // Obsidian use this to specify the size of the image, but Hexo doesn't need it.
+            var regex = new Regex(@"\|\d+$");
+            linkText = regex.Replace(linkText, "");
         }
 
         linkRelativePath = AdaptPostPath(linkRelativePath);
