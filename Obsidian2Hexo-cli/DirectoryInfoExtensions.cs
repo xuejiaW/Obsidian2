@@ -19,7 +19,11 @@ public static class DirectoryInfoExtensions
                  .Where(path => ignoreList == null || !ignoreList.Any(path.Contains)).ToList()
                  .ForEach(file =>
                   {
-                      File.Copy(file, file.Replace(directory.FullName, destinationDir), true);
+                      string targetPath = file.Replace(directory.FullName, destinationDir);
+                      var info = new FileInfo(targetPath);
+                      targetPath = Path.Join(info.Directory.FullName, info.Name.ToLower());
+
+                      File.Copy(file, targetPath, true);
                   });
     }
 }
