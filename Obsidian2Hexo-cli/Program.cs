@@ -6,9 +6,18 @@ namespace Obsidian2Hexo
     {
         private static async Task<int> Main(string[] args)
         {
-            var obsidianOption
-                = new Option<DirectoryInfo>("--obsidian-vault-dir", "Path to the Obsidian vault directory");
-            var hexoOption = new Option<DirectoryInfo>("--hexo-posts-dir", "Path to the Hexo posts directory");
+            Configuration configuration = ConfigurationMgr.Load();
+
+            var obsidianOption = new Option<DirectoryInfo>(name: "--obsidian-vault-dir",
+                                                           description: "Path to the Obsidian vault directory",
+                                                           getDefaultValue: () =>
+                                                               new DirectoryInfo(configuration.obsidianVaultPath));
+
+            var hexoOption = new Option<DirectoryInfo>(name: "--hexo-posts-dir",
+                                                       description: "Path to the Hexo posts directory",
+                                                       getDefaultValue: () =>
+                                                           new DirectoryInfo(configuration.hexoPostsPath));
+
 
             var rootCommand = new RootCommand("Tools converts obsidian notes to hexo posts");
             rootCommand.AddOption(obsidianOption);
@@ -24,8 +33,8 @@ namespace Obsidian2Hexo
 
         private static void Run(DirectoryInfo obsidianVaultDir, DirectoryInfo hexoPostsDir)
         {
-            Console.WriteLine($"Hexo posts directory: {hexoPostsDir.FullName}");
-            Console.WriteLine($"Obsidian vault directory: {obsidianVaultDir.FullName}");
+            Console.WriteLine($"Obsidian vault path is {obsidianVaultDir.FullName}");
+            Console.WriteLine($"Hexo posts path is {hexoPostsDir.FullName}");
 
             if (!obsidianVaultDir.Exists) throw new ArgumentException("The Obsidian directory does not exist.");
             if (!hexoPostsDir.Exists) throw new ArgumentException("The Hexo posts directory does not exist.");
