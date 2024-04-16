@@ -28,15 +28,20 @@ internal class Obsidian2HexoHandler
         Directory.GetFiles(obsidianTempDir.FullName, "*.md", SearchOption.AllDirectories)
                  .Where(file => file.EndsWith(".md")).ToList().ForEach(notePath =>
                   {
-                      Console.WriteLine($"Handle file is {notePath}");
-                      var generator = new HexoPostGenerator(notePath, hexoPostsDir);
-                      bool requiredToBePublished = generator.Generate(out string postPath);
-                      if (!requiredToBePublished) return;
+                      try
+                      {
+                          var generator = new HexoPostGenerator(notePath, hexoPostsDir);
+                          bool requiredToBePublished = generator.Generate(out string postPath);
+                          if (!requiredToBePublished) return;
 
-                      var formatter = new HexoPostFormatter(notePath, postPath);
-                      formatter.Format();
+                          var formatter = new HexoPostFormatter(notePath, postPath);
+                          formatter.Format();
 
-                      CopyAssetIfExist(notePath);
+                          CopyAssetIfExist(notePath);
+                      } catch (Exception e)
+                      {
+                          Console.WriteLine($"Handling file {notePath}, Exception {e} Happened: \n {e.StackTrace}");
+                      }
                   });
 
         void CopyAssetIfExist(string notePath)
