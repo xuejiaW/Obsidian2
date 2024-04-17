@@ -15,15 +15,15 @@ internal class HexoPostFormatter
         m_DstPostPath = dstPostPath;
     }
 
-    public void Format()
+    public async Task Format()
     {
-        string content = File.ReadAllText(m_SrcNotePath);
+        string content = await File.ReadAllTextAsync(m_SrcNotePath);
         string ret = AdmonitionsFormatter.FormatCodeBlockStyle2ButterflyStyle(content);
         ret = AdmonitionsFormatter.FormatMkDocsStyle2ButterflyStyle(ret);
         ret = FormatBlockLink(ret, m_SrcNotePath);
         ret = CleanBlockLinkMark(ret);
         ret = FormatMdLinkToHexoStyle(ret);
-        File.WriteAllText(m_DstPostPath, ret);
+        await File.WriteAllTextAsync(m_DstPostPath, ret);
     }
 
     private string FormatBlockLink(string content, string srcNotePath)

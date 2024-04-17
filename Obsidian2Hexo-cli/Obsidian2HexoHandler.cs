@@ -1,4 +1,5 @@
-﻿using Progress = Obsidian2Hexo.ConsoleUI.Progress;
+﻿using System.Diagnostics;
+using Progress = Obsidian2Hexo.ConsoleUI.Progress;
 
 namespace Obsidian2Hexo;
 
@@ -15,12 +16,15 @@ internal class Obsidian2HexoHandler
         obsidianTempDir = new DirectoryInfo(Obsidian2HexoHandler.hexoPostsDir + "\\temp\\");
     }
 
-    public async void Process()
+    public async Task Process()
     {
         if (obsidianTempDir.Exists)
             obsidianTempDir.Delete(true);
+
         obsidianVaultDir.DeepCopy(obsidianTempDir.FullName, new List<string> {".obsidian", ".git", ".trash"});
+
         await ConvertObsidianNoteToHexoPostBundles();
+
         obsidianTempDir.Delete(true);
         Console.WriteLine("Convert Completed");
     }
@@ -30,11 +34,11 @@ internal class Obsidian2HexoHandler
         List<string> files = Directory.GetFiles(obsidianTempDir.FullName, "*.md", SearchOption.AllDirectories)
                                       .Where(file => file.EndsWith(".md")).ToList();
 
-        await Progress.CreateProgress("Converting Obsidian Notes to Hexo Posts", async progressTask =>
+        await Progress.CreateProgress("Converting Obsidian Notes to Hexo Posts", async (progressTask) =>
         {
             progressTask.MaxValue = files.Count;
 
-            foreach (string notePath in files)
+            Task[] tasks = files.Select(notePath => Task.Run(async () =>
             {
                 try
                 {
@@ -42,22 +46,22 @@ internal class Obsidian2HexoHandler
                     bool requiredToBePublished = generator.Generate(out string postPath);
                     if (!requiredToBePublished)
                     {
-                        progressTask.Increment(1);
-                        continue;
+                        return;
                     }
 
                     var formatter = new HexoPostFormatter(notePath, postPath);
-                    formatter.Format();
-
+                    await formatter.Format();
                     await CopyAssetIfExist(notePath);
-
-                    progressTask.Increment(1);
                 } catch (Exception e)
                 {
-                    Console.WriteLine($"Handling file {notePath}, Exception {e} Happened: \n {e.StackTrace}");
+                    Console.WriteLine($"Error handling file {notePath}, Exception {e} Happened: \n {e.StackTrace}");
+                } finally
+                {
                     progressTask.Increment(1);
                 }
-            }
+            })).ToArray();
+
+            await Task.WhenAll(tasks);
         });
 
         Task CopyAssetIfExist(string notePath)

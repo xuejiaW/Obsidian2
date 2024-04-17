@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using System.Diagnostics;
 
 namespace Obsidian2Hexo
 {
@@ -60,7 +61,7 @@ namespace Obsidian2Hexo
             CheckDirectory(hexoPostsDir, "Hexo posts directory");
 
             var obsidian2HexoHandler = new Obsidian2HexoHandler(obsidianVaultDir, hexoPostsDir);
-            obsidian2HexoHandler.Process();
+            obsidian2HexoHandler.Process().Wait();
         }
 
         private static void CheckDirectory(DirectoryInfo directory, string description)
