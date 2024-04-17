@@ -1,4 +1,6 @@
-﻿namespace Obsidian2Hexo;
+﻿using Progress = Obsidian2Hexo.ConsoleUI.Progress;
+
+namespace Obsidian2Hexo;
 
 internal class Obsidian2HexoHandler
 {
@@ -13,47 +15,62 @@ internal class Obsidian2HexoHandler
         obsidianTempDir = new DirectoryInfo(Obsidian2HexoHandler.hexoPostsDir + "\\temp\\");
     }
 
-    public void Process()
+    public async void Process()
     {
         if (obsidianTempDir.Exists)
             obsidianTempDir.Delete(true);
         obsidianVaultDir.DeepCopy(obsidianTempDir.FullName, new List<string> {".obsidian", ".git", ".trash"});
-        ConvertObsidianNoteToHexoPostBundles();
+        await ConvertObsidianNoteToHexoPostBundles();
         obsidianTempDir.Delete(true);
         Console.WriteLine("Convert Completed");
     }
 
-    private void ConvertObsidianNoteToHexoPostBundles()
+    private async Task ConvertObsidianNoteToHexoPostBundles()
     {
-        Directory.GetFiles(obsidianTempDir.FullName, "*.md", SearchOption.AllDirectories)
-                 .Where(file => file.EndsWith(".md")).ToList().ForEach(notePath =>
-                  {
-                      try
-                      {
-                          var generator = new HexoPostGenerator(notePath, hexoPostsDir);
-                          bool requiredToBePublished = generator.Generate(out string postPath);
-                          if (!requiredToBePublished) return;
+        List<string> files = Directory.GetFiles(obsidianTempDir.FullName, "*.md", SearchOption.AllDirectories)
+                                      .Where(file => file.EndsWith(".md")).ToList();
 
-                          var formatter = new HexoPostFormatter(notePath, postPath);
-                          formatter.Format();
+        await Progress.CreateProgress("Converting Obsidian Notes to Hexo Posts", async progressTask =>
+        {
+            progressTask.MaxValue = files.Count;
 
-                          CopyAssetIfExist(notePath);
-                      } catch (Exception e)
-                      {
-                          Console.WriteLine($"Handling file {notePath}, Exception {e} Happened: \n {e.StackTrace}");
-                      }
-                  });
+            foreach (string notePath in files)
+            {
+                try
+                {
+                    var generator = new HexoPostGenerator(notePath, hexoPostsDir);
+                    bool requiredToBePublished = generator.Generate(out string postPath);
+                    if (!requiredToBePublished)
+                    {
+                        progressTask.Increment(1);
+                        continue;
+                    }
 
-        void CopyAssetIfExist(string notePath)
+                    var formatter = new HexoPostFormatter(notePath, postPath);
+                    formatter.Format();
+
+                    await CopyAssetIfExist(notePath);
+
+                    progressTask.Increment(1);
+                } catch (Exception e)
+                {
+                    Console.WriteLine($"Handling file {notePath}, Exception {e} Happened: \n {e.StackTrace}");
+                    progressTask.Increment(1);
+                }
+            }
+        });
+
+        Task CopyAssetIfExist(string notePath)
         {
             string noteName = Path.GetFileNameWithoutExtension(notePath);
             string noteAssetsDir = Path.GetDirectoryName(notePath) + @"\assets\" + noteName;
 
-            if (!Path.Exists(noteAssetsDir)) return;
+            if (!Path.Exists(noteAssetsDir)) return Task.CompletedTask;
 
             string postAssetsDir = HexoPostStyleAdapter.AdaptPostPath(hexoPostsDir + "\\" + noteName);
             if (Directory.Exists(postAssetsDir)) Directory.Delete(postAssetsDir, true);
             new DirectoryInfo(noteAssetsDir).DeepCopy(postAssetsDir);
+            return Task.CompletedTask;
         }
     }
 }
