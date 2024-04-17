@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Progress = Obsidian2Hexo.ConsoleUI.Progress;
+﻿using Progress = Obsidian2Hexo.ConsoleUI.Progress;
 
 namespace Obsidian2Hexo;
 
@@ -21,8 +20,7 @@ internal class Obsidian2HexoHandler
         if (obsidianTempDir.Exists)
             obsidianTempDir.Delete(true);
 
-        obsidianVaultDir.DeepCopy(obsidianTempDir.FullName, new List<string> {".obsidian", ".git", ".trash"});
-
+        await obsidianVaultDir.DeepCopy(obsidianTempDir.FullName, new List<string> {".obsidian", ".git", ".trash"});
         await ConvertObsidianNoteToHexoPostBundles();
 
         obsidianTempDir.Delete(true);
@@ -64,17 +62,16 @@ internal class Obsidian2HexoHandler
             await Task.WhenAll(tasks);
         });
 
-        Task CopyAssetIfExist(string notePath)
+        async Task CopyAssetIfExist(string notePath)
         {
             string noteName = Path.GetFileNameWithoutExtension(notePath);
             string noteAssetsDir = Path.GetDirectoryName(notePath) + @"\assets\" + noteName;
 
-            if (!Path.Exists(noteAssetsDir)) return Task.CompletedTask;
+            if (!Path.Exists(noteAssetsDir)) return;
 
             string postAssetsDir = HexoPostStyleAdapter.AdaptPostPath(hexoPostsDir + "\\" + noteName);
             if (Directory.Exists(postAssetsDir)) Directory.Delete(postAssetsDir, true);
-            new DirectoryInfo(noteAssetsDir).DeepCopy(postAssetsDir);
-            return Task.CompletedTask;
+            await new DirectoryInfo(noteAssetsDir).DeepCopy(postAssetsDir);
         }
     }
 }

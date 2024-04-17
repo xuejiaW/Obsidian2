@@ -2,8 +2,8 @@
 
 public static class DirectoryInfoExtensions
 {
-    public static void DeepCopy(this DirectoryInfo directory, string destinationDir,
-                                List<string> ignoreList = null)
+    public static async Task DeepCopy(this DirectoryInfo directory, string destinationDir,
+                                      List<string> ignoreList = null)
     {
         if (string.IsNullOrEmpty(destinationDir)) return;
         if (!Directory.Exists(destinationDir)) Directory.CreateDirectory(destinationDir);
@@ -15,15 +15,25 @@ public static class DirectoryInfoExtensions
                       Directory.CreateDirectory(dir.Replace(directory.FullName, destinationDir));
                   });
 
-        Directory.GetFiles(directory.FullName, "*.*", SearchOption.AllDirectories)
-                 .Where(path => ignoreList == null || !ignoreList.Any(path.Contains)).ToList()
-                 .ForEach(file =>
-                  {
-                      string targetPath = file.Replace(directory.FullName, destinationDir);
-                      var info = new FileInfo(targetPath);
-                      targetPath = Path.Join(info.Directory.FullName, info.Name.ToLower());
+        List<string> files = Directory.GetFiles(directory.FullName, "*.*", SearchOption.AllDirectories)
+                                      .Where(path => ignoreList == null || !ignoreList.Any(path.Contains)).ToList();
 
-                      File.Copy(file, targetPath, true);
-                  });
+
+        IEnumerable<Task> tasks = files.Select(file => Task.Run(async () =>
+        {
+            await CopyFile(file);
+        }));
+
+        await Task.WhenAll(tasks);
+
+        Task CopyFile(string file)
+        {
+            string targetPath = file.Replace(directory.FullName, destinationDir);
+            var info = new FileInfo(targetPath);
+            targetPath = Path.Join(info.Directory.FullName, info.Name.ToLower());
+
+            File.Copy(file, targetPath, true);
+            return Task.CompletedTask;
+        }
     }
 }

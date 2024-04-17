@@ -34,7 +34,7 @@ internal class HexoPostGenerator
         if (!noteAssetsDir.Exists) return postPath;
         var postAssetsDir = new DirectoryInfo(postPath.Replace(".md", ""));
         if (postAssetsDir.Exists) postAssetsDir.Delete(true);
-        noteAssetsDir.DeepCopy(postAssetsDir.FullName);
+        noteAssetsDir.DeepCopy(postAssetsDir.FullName).Wait();
 
         Directory.GetFiles(postAssetsDir.FullName, "*.*", SearchOption.AllDirectories).ToList().ForEach(file =>
         {
