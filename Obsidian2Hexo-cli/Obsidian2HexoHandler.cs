@@ -30,7 +30,6 @@ internal class Obsidian2HexoHandler
         await ConvertObsidianNoteToHexoPostBundles();
 
         obsidianTempDir.Delete(true);
-        Console.WriteLine("Convert Completed");
     }
 
     private async Task ConvertObsidianNoteToHexoPostBundles()
