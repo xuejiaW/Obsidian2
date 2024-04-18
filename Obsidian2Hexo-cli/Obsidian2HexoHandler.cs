@@ -36,23 +36,34 @@ internal class Obsidian2HexoHandler
         {
             progressTask.MaxValue = files.Count;
 
-            Task[] tasks = files.Select(notePath => Task.Run(async () =>
+            Task<HexoPostFormatter>[] hexoPostsPath = files.Select(notePath => Task.Run(async () =>
             {
+                var generator = new HexoPostGenerator(hexoPostsDir);
+                if (!ObsidianNoteParser.IsRequiredToBePublished(notePath))
+                    return null;
+
+                string postPath = await generator.CreateHexoPostBundle(notePath);
+                return new HexoPostFormatter(notePath, postPath);
+            })).ToArray();
+
+            IEnumerable<HexoPostFormatter> validFormatters = hexoPostsPath.Select(formatter => formatter.Result);
+
+            Task[] tasks = validFormatters.Select(formatter => Task.Run(async () =>
+            {
+                if (formatter == null)
+                {
+                    progressTask.Increment(1);
+                    return;
+                }
+
                 try
                 {
-                    var generator = new HexoPostGenerator(notePath, hexoPostsDir);
-                    bool requiredToBePublished = generator.Generate(out string postPath);
-                    if (!requiredToBePublished)
-                    {
-                        return;
-                    }
-
-                    var formatter = new HexoPostFormatter(notePath, postPath);
                     await formatter.Format();
-                    await CopyAssetIfExist(notePath);
+                    await CopyAssetIfExist(formatter.postPath);
                 } catch (Exception e)
                 {
-                    Console.WriteLine($"Error handling file {notePath}, Exception {e} Happened: \n {e.StackTrace}");
+                    Console
+                       .WriteLine($"Error handling file {formatter.postPath}, Exception {e} Happened: \n {e.StackTrace}");
                 } finally
                 {
                     progressTask.Increment(1);

@@ -2,25 +2,12 @@
 
 internal class HexoPostGenerator
 {
-    private string m_NotePath = null;
     private DirectoryInfo m_PostsDir = null;
 
-    public HexoPostGenerator(string notePath, DirectoryInfo postDir)
-    {
-        m_NotePath = notePath;
-        m_PostsDir = postDir;
-    }
-
-    public bool Generate(out string notePath)
-    {
-        notePath = null;
-        if (!ObsidianNoteParser.IsRequiredToBePublished(m_NotePath)) return false;
-        notePath = CreateHexoPostBundle(m_NotePath);
-        return true;
-    }
+    public HexoPostGenerator(DirectoryInfo postDir) { m_PostsDir = postDir; }
 
 
-    private string CreateHexoPostBundle(string notePath)
+    public async Task<string> CreateHexoPostBundle(string notePath)
     {
         string noteName = Path.GetFileNameWithoutExtension(notePath);
 
@@ -34,7 +21,7 @@ internal class HexoPostGenerator
         if (!noteAssetsDir.Exists) return postPath;
         var postAssetsDir = new DirectoryInfo(postPath.Replace(".md", ""));
         if (postAssetsDir.Exists) postAssetsDir.Delete(true);
-        noteAssetsDir.DeepCopy(postAssetsDir.FullName).Wait();
+        await noteAssetsDir.DeepCopy(postAssetsDir.FullName);
 
         Directory.GetFiles(postAssetsDir.FullName, "*.*", SearchOption.AllDirectories).ToList().ForEach(file =>
         {

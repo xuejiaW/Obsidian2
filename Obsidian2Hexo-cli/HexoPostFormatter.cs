@@ -9,6 +9,8 @@ internal class HexoPostFormatter
     private string m_SrcNotePath = null;
     private string m_DstPostPath = null;
 
+    public string postPath => m_DstPostPath;
+
     public HexoPostFormatter(string srcNotePath, string dstPostPath)
     {
         m_SrcNotePath = srcNotePath;

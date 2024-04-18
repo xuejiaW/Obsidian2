@@ -60,8 +60,11 @@ namespace Obsidian2Hexo
             CheckDirectory(obsidianVaultDir, "Obsidian vault directory");
             CheckDirectory(hexoPostsDir, "Hexo posts directory");
 
+            var stopwatch = Stopwatch.StartNew();
             var obsidian2HexoHandler = new Obsidian2HexoHandler(obsidianVaultDir, hexoPostsDir);
             obsidian2HexoHandler.Process().Wait();
+            stopwatch.Stop();
+            Console.WriteLine($"Operation took {stopwatch.ElapsedMilliseconds} milliseconds");
         }
 
         private static void CheckDirectory(DirectoryInfo directory, string description)
