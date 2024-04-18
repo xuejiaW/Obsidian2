@@ -1,4 +1,5 @@
-﻿using Progress = Obsidian2Hexo.ConsoleUI.Progress;
+﻿using Obsidian2Hexo.ConsoleUI;
+using Progress = Obsidian2Hexo.ConsoleUI.Progress;
 
 namespace Obsidian2Hexo;
 
@@ -20,7 +21,12 @@ internal class Obsidian2HexoHandler
         if (obsidianTempDir.Exists)
             obsidianTempDir.Delete(true);
 
-        await obsidianVaultDir.DeepCopy(obsidianTempDir.FullName, new List<string> {".obsidian", ".git", ".trash"});
+        Status.CreateStatus("Making backup", () =>
+        {
+            obsidianVaultDir.DeepCopy(obsidianTempDir.FullName, new List<string> {".obsidian", ".git", ".trash"})
+                            .Wait();
+        });
+
         await ConvertObsidianNoteToHexoPostBundles();
 
         obsidianTempDir.Delete(true);
@@ -32,7 +38,7 @@ internal class Obsidian2HexoHandler
         List<string> files = Directory.GetFiles(obsidianTempDir.FullName, "*.md", SearchOption.AllDirectories)
                                       .Where(file => file.EndsWith(".md")).ToList();
 
-        await Progress.CreateProgress("Converting Obsidian Notes to Hexo Posts", async (progressTask) =>
+        await Progress.CreateProgress("Converting Obsidian Notes to Hexo Posts", async progressTask =>
         {
             progressTask.MaxValue = files.Count;
 

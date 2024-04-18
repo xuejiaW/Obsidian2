@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using System.Diagnostics;
+using Obsidian2Hexo.ConsoleUI;
 
 namespace Obsidian2Hexo
 {
