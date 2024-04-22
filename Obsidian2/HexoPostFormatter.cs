@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Obsidian2Hexo;
+namespace Obsidian2;
 
 using Adapter = HexoPostStyleAdapter;
 

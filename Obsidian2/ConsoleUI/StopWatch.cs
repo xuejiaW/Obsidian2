@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using Spectre.Console;
 
-namespace Obsidian2Hexo.ConsoleUI;
+namespace Obsidian2.ConsoleUI;
 
 public static class StopWatch
 {

@@ -1,7 +1,7 @@
 ﻿using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace Obsidian2Hexo;
+namespace Obsidian2;
 
 internal static class ObsidianNoteParser
 {

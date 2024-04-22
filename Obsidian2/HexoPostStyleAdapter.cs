@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using TinyPinyin;
 
-namespace Obsidian2Hexo;
+namespace Obsidian2;
 
 internal static class HexoPostStyleAdapter
 {

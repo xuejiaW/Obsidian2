@@ -1,7 +1,7 @@
-﻿using Obsidian2Hexo.ConsoleUI;
-using Progress = Obsidian2Hexo.ConsoleUI.Progress;
+﻿using Obsidian2.ConsoleUI;
+using Progress = Obsidian2.ConsoleUI.Progress;
 
-namespace Obsidian2Hexo;
+namespace Obsidian2;
 
 internal class Obsidian2HexoHandler
 {
@@ -43,12 +43,19 @@ internal class Obsidian2HexoHandler
 
             Task<HexoPostFormatter>[] hexoPostsPath = files.Select(notePath => Task.Run(async () =>
             {
-                var generator = new HexoPostGenerator(hexoPostsDir);
-                if (!ObsidianNoteParser.IsRequiredToBePublished(notePath))
-                    return null;
+                try
+                {
+                    var generator = new HexoPostGenerator(hexoPostsDir);
+                    if (!ObsidianNoteParser.IsRequiredToBePublished(notePath))
+                        return null;
 
-                string postPath = await generator.CreateHexoPostBundle(notePath);
-                return new HexoPostFormatter(notePath, postPath);
+                    string postPath = await generator.CreateHexoPostBundle(notePath);
+                    return new HexoPostFormatter(notePath, postPath);
+                } catch (Exception e)
+                {
+                    Console.WriteLine($"Error Happens while handling file {notePath}, Exception {e}");
+                    return null;
+                }
             })).ToArray();
 
             IEnumerable<HexoPostFormatter> validFormatters = hexoPostsPath.Select(formatter => formatter.Result);

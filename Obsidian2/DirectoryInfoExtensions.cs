@@ -1,4 +1,4 @@
-﻿namespace Obsidian2Hexo;
+﻿namespace Obsidian2;
 
 public static class DirectoryInfoExtensions
 {

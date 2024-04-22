@@ -1,4 +1,4 @@
-namespace Obsidian2Hexo.Tests;
+namespace Obsidian2.Tests;
 
 public class AdmonitionFormatterTests
 {
