@@ -3,11 +3,11 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net7.0</TargetFramework>
-        <RootNamespace>Obsidian2Hexo_cli</RootNamespace>
+        <RootNamespace>Obsidian2</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <PackAsTool>true</PackAsTool>
-        <ToolCommandName>obsidian2hexo</ToolCommandName>
+        <ToolCommandName>obsidian2</ToolCommandName>
         <Version>0.1.3</Version>
         <PackageOutputPath>./nupkg</PackageOutputPath>
     </PropertyGroup>

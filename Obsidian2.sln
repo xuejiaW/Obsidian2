@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# 
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Obsidian2Hexo-cli", "Obsidian2Hexo-cli\Obsidian2Hexo-cli.csproj", "{0D339399-33A6-4869-8FCB-BF0461E09641}"
+#
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Obsidian2", "Obsidian2\Obsidian2.csproj", "{0D339399-33A6-4869-8FCB-BF0461E09641}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Obsidian2Hexo-cli.Tests", "Obsidian2Hexo-cli.Tests\Obsidian2Hexo-cli.Tests.csproj", "{4B1C12BD-82B3-4849-A467-1E1B2F61A048}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Obsidian2.Tests", "Obsidian2.Tests\Obsidian2.Tests.csproj", "{4B1C12BD-82B3-4849-A467-1E1B2F61A048}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

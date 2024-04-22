@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-    <RootNamespace>Obsidian2Hexo_cli.Tests</RootNamespace>
+    <RootNamespace>Obsidian2.Tests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Obsidian2Hexo-cli\Obsidian2Hexo-cli.csproj" />
+    <ProjectReference Include="..\Obsidian2\Obsidian2.csproj" />
   </ItemGroup>
 
 </Project>
