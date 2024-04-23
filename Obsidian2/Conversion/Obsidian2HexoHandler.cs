@@ -23,7 +23,7 @@ internal class Obsidian2HexoHandler
 
         Status.CreateStatus("Making backup", () =>
         {
-            obsidianVaultDir.DeepCopy(obsidianTempDir.FullName, new List<string> {".obsidian", ".git", ".trash"})
+            obsidianVaultDir.DeepCopy(obsidianTempDir.FullName, ConfigurationMgr.configuration.ignoresPaths.ToList())
                             .Wait();
         });
 

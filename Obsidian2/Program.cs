@@ -9,6 +9,7 @@ namespace Obsidian2
             var rootCommand = new RootCommand();
             rootCommand.AddCommand(HexoCommand.CreateCommand());
             rootCommand.AddCommand(SetCommand.CreateCommand());
+            rootCommand.AddCommand(IgnoreCommand.CreateCommand());
 
             rootCommand.SetHandler(() => { });
 
