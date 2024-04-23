@@ -43,6 +43,7 @@ internal static class ObsidianNoteParser
     private static Dictionary<string, object> GetYAMLMetaData(string notePath)
     {
         string mdFileContent = File.ReadAllText(notePath);
+        if (mdFileContent.Length < 3) return null;
         int yamlEnd = mdFileContent.IndexOf("---", 1, StringComparison.Ordinal);
         if (yamlEnd == -1) return null;
 
