@@ -13,14 +13,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
-        <PackageReference Include="Spectre.Console" Version="0.48.0"/>
-        <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1"/>
-        <PackageReference Include="TinyPinyin.Net" Version="1.0.2"/>
-        <PackageReference Include="YamlDotNet" Version="13.7.1"/>
-        <Content Include="Resources/configuration.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Spectre.Console" Version="0.48.0" />
+        <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+        <PackageReference Include="TinyPinyin.Net" Version="1.0.2" />
+        <PackageReference Include="YamlDotNet" Version="13.7.1" />
+        <EmbeddedResource Include="Resources/configuration.json" />
     </ItemGroup>
 
 </Project>
