@@ -69,8 +69,8 @@ internal class HexoPostFormatter
                 string title = ObsidianNoteParser.GetTitle(targetNotePath);
                 if (!ObsidianNoteParser.IsRequiredToBePublished(targetNotePath)) return title;
 
-                string postPath = Adapter.AdaptPostPath(Adapter.ConvertMdLink2Relative(targetNotePath));
-                return $"[{title}]({postPath})";
+                string referencedPostPath = Adapter.AdaptPostPath(Adapter.ConvertMdLink2Relative(targetNotePath));
+                return $"[{title}]({referencedPostPath})";
             }
         }
     }
@@ -83,7 +83,7 @@ internal class HexoPostFormatter
 
     private string FormatMdLinkToHexoStyle(string content)
     {
-        string linkPattern = @"\[(.*?)\]\((.*?)\)";
+        string linkPattern = @"\[(.*?)\]\((?!http)(.*?)\)";
         string ret = Regex.Replace(content, linkPattern, ReplaceLink);
         return ret;
 
@@ -92,7 +92,7 @@ internal class HexoPostFormatter
             string linkText = match.Groups[1].Value;
             string linkRelativePath = match.Groups[2].Value;
 
-            return HexoPostStyleAdapter.AdaptLink(linkText, linkRelativePath, m_SrcNotePath, m_DstPostPath);
+            return Adapter.AdaptLink(linkText, linkRelativePath, m_SrcNotePath, m_DstPostPath);
         }
     }
 }
