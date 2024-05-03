@@ -38,6 +38,12 @@ internal static class HexoPostStyleAdapter
         }
     }
 
+    public static string AdaptAssetPath(string path)
+    {
+        string ret = ConvertSpaceToUnderScore(path);
+        return ret.ToLower();
+    }
+
     public static string AdaptLink(string linkText, string linkRelativePath, string notePath, string postPath)
     {
         string fragment = "";

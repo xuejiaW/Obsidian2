@@ -25,7 +25,7 @@ internal class HexoPostGenerator
 
         Directory.GetFiles(postAssetsDir.FullName, "*.*", SearchOption.AllDirectories).ToList().ForEach(file =>
         {
-            File.Move(file, file.ToLower());
+            File.Move(file, HexoPostStyleAdapter.AdaptAssetPath(file));
         });
         return postPath;
     }
