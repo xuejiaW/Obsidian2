@@ -6,38 +6,42 @@ public static class SetCommand
 {
     internal static Command CreateCommand()
     {
-        Configuration configuration = ConfigurationMgr.configuration;
-
         var setCommand = new Command("set", "Set Configuration");
-        var obsidianOption = new Option<DirectoryInfo>(name: "--obsidian-vault-dir",
-                                                       description: "Path to the Obsidian vault directory",
-                                                       getDefaultValue: () =>
-                                                           new DirectoryInfo(configuration.obsidianVaultPath));
-
-        var hexoOption = new Option<DirectoryInfo>(name: "--hexo-posts-dir",
-                                                   description: "Path to the Hexo posts directory",
-                                                   getDefaultValue: () =>
-                                                       new DirectoryInfo(configuration.hexoPostsPath));
-
-        setCommand.AddOption(obsidianOption);
-        setCommand.AddOption(hexoOption);
-        setCommand.SetHandler(SetHexoPostsDir, hexoOption);
-        setCommand.SetHandler(SetObsidianVaultDir, obsidianOption);
+        setCommand.AddCommand(CreateSetHexoPostsDirCmd());
+        setCommand.AddCommand(CreateSetObsidianVaultDirCmd());
         return setCommand;
     }
 
-    private static void SetHexoPostsDir(DirectoryInfo hexoPostsDir)
+    private static Command CreateSetHexoPostsDirCmd()
     {
-        Utils.CheckDirectory(hexoPostsDir, "Hexo posts directory");
+        var setHexoPostsDirCmd = new Command("hexo-posts-dir", "Set Hexo posts directory");
+        var hexoPostsDirArg = new Argument<DirectoryInfo>();
+        setHexoPostsDirCmd.AddArgument(hexoPostsDirArg);
+        setHexoPostsDirCmd.SetHandler(SetHexoPostsDir, hexoPostsDirArg);
+        return setHexoPostsDirCmd;
 
-        ConfigurationMgr.configuration.hexoPostsPath = hexoPostsDir.FullName;
-        ConfigurationMgr.Save();
+        void SetHexoPostsDir(DirectoryInfo hexoPostsDir)
+        {
+            Utils.CheckDirectory(hexoPostsDir, "Hexo posts directory");
+
+            ConfigurationMgr.configuration.hexoPostsPath = hexoPostsDir.FullName;
+            ConfigurationMgr.Save();
+        }
     }
 
-    private static void SetObsidianVaultDir(DirectoryInfo obsidianVaultDir)
+    private static Command CreateSetObsidianVaultDirCmd()
     {
-        Utils.CheckDirectory(obsidianVaultDir, "Obsidian vault directory");
-        ConfigurationMgr.configuration.obsidianVaultPath = obsidianVaultDir.FullName;
-        ConfigurationMgr.Save();
+        var setObsidianVaultDirCmd = new Command("obsidian-vault-dir", "Set Obsidian vault directory");
+        var obsidianVaultDirArg = new Argument<DirectoryInfo>();
+        setObsidianVaultDirCmd.AddArgument(obsidianVaultDirArg);
+        setObsidianVaultDirCmd.SetHandler(SetObsidianVaultDir, obsidianVaultDirArg);
+        return setObsidianVaultDirCmd;
+
+        void SetObsidianVaultDir(DirectoryInfo obsidianVaultDir)
+        {
+            Utils.CheckDirectory(obsidianVaultDir, "Obsidian vault directory");
+            ConfigurationMgr.configuration.obsidianVaultPath = obsidianVaultDir.FullName;
+            ConfigurationMgr.Save();
+        }
     }
 }
