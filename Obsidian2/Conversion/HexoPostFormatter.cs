@@ -22,10 +22,61 @@ internal class HexoPostFormatter
         string content = await File.ReadAllTextAsync(m_SrcNotePath);
         string ret = AdmonitionsFormatter.FormatCodeBlockStyle2ButterflyStyle(content);
         ret = AdmonitionsFormatter.FormatMkDocsStyle2ButterflyStyle(ret);
+        ret = FormatHeaderLink(ret, m_SrcNotePath);
         ret = FormatBlockLink(ret, m_SrcNotePath);
         ret = CleanBlockLinkMark(ret);
         ret = FormatMdLinkToHexoStyle(ret);
         await File.WriteAllTextAsync(m_DstPostPath, ret);
+    }
+
+    private string FormatHeaderLink(string content, string srcNotePath)
+    {
+        string pattern = @"!\[(.*?)\]\((.*?.md)#(?!\^)(.*?)\)";
+        return Regex.Replace(content, pattern, ReplaceHeaderLink);
+
+        string ReplaceHeaderLink(Match match)
+        {
+            string _ = match.Groups[1].Value;
+            string linkRelativePath = match.Groups[2].Value;
+            string header = match.Groups[3].Value;
+
+            header = header.Replace("%20", " ");
+
+            string targetNotePath
+                = ObsidianNoteParser.GetNotePathBasedOnFolder(Obsidian2HexoHandler.obsidianTempDir.FullName,
+                                                              linkRelativePath);
+
+            if (!File.Exists(targetNotePath))
+                targetNotePath = ObsidianNoteParser.GetAbsoluteLinkPath(srcNotePath, linkRelativePath);
+
+            if (File.Exists(targetNotePath))
+            {
+                List<string> lines = File.ReadLines(targetNotePath).ToList();
+                int startIndex = lines.FindIndex(line => line.StartsWith("#") &&
+                                                         line.EndsWith(header, StringComparison.OrdinalIgnoreCase));
+                int endIndex = lines.FindIndex(startIndex + 1, line => line.StartsWith("#"));
+                List<string> contentLines = lines.GetRange(startIndex, endIndex - startIndex);
+
+                string quoteContent = $"""
+                                       {string.Join("\n", contentLines)}
+                                       ———— {GetReferenceLink()}
+                                       """;
+                return Adapter.AdaptAdmonition(quoteContent, "'fas fa-quote-left'");
+            }
+
+            Console.WriteLine($"Not Found for relative path {linkRelativePath}");
+            Console.WriteLine($"Not Found for absolute path {targetNotePath}");
+            return "";
+
+            string GetReferenceLink()
+            {
+                string title = ObsidianNoteParser.GetTitle(targetNotePath);
+                if (!ObsidianNoteParser.IsRequiredToBePublished(targetNotePath)) return title;
+
+                string referencedPostPath = Adapter.AdaptPostPath(Adapter.ConvertMdLink2Relative(targetNotePath));
+                return $"[{title}]({referencedPostPath})";
+            }
+        }
     }
 
     private string FormatBlockLink(string content, string srcNotePath)
@@ -40,6 +91,7 @@ internal class HexoPostFormatter
             string _ = match.Groups[1].Value;
             string linkRelativePath = match.Groups[2].Value;
             string blockId = match.Groups[3].Value;
+
             string targetNotePath
                 = ObsidianNoteParser.GetNotePathBasedOnFolder(Obsidian2HexoHandler.obsidianTempDir.FullName,
                                                               linkRelativePath);
