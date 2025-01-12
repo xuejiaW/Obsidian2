@@ -10,6 +10,7 @@
         <ToolCommandName>obsidian2</ToolCommandName>
         <Version>0.1.3</Version>
         <PackageOutputPath>./nupkg</PackageOutputPath>
+        <NoWarn>$(NoWarn);NETSDK1138;CS0649</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
