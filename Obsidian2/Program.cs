@@ -10,6 +10,8 @@ namespace Obsidian2
             rootCommand.AddCommand(HexoCommand.CreateCommand());
             rootCommand.AddCommand(SetCommand.CreateCommand());
             rootCommand.AddCommand(IgnoreCommand.CreateCommand());
+            rootCommand.AddCommand(CompatCommand.CreateCommand());
+            rootCommand.AddCommand(ZhihuCommand.CreateCommand());
 
             rootCommand.SetHandler(() => { });
 

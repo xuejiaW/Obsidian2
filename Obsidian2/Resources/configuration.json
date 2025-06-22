@@ -5,5 +5,12 @@
         ".git",
         ".obsidian",
         ".trash"
-    ]
+    ],
+    "GitHub": {
+        "PersonalAccessToken": "",
+        "RepoOwner": "xuejiaW",
+        "RepoName": "Obsidian2ImageRepo",
+        "BranchName": "main",
+        "ImageBasePath": "images"
+    }
 }
