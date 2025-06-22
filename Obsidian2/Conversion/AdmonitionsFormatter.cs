@@ -136,4 +136,35 @@ internal static class AdmonitionsFormatter
             return match.Success;
         }
     }
+
+    public static string FormatMkDocsCalloutToQuote(string content)
+    {
+        string calloutPattern = @">\s*\[!([a-zA-Z]+)\].*?\n((?:>\s*.*(?:\n|$))+)";
+
+        string processedContent = Regex.Replace(content, calloutPattern, match =>
+        {
+            string calloutBody = match.Groups[2].Value;
+
+            var contentLines = calloutBody.Split('\n')
+                                          .Select(line => Regex.Replace(line.Trim(), @"^>\s*", "").Trim())
+                                          .Where(line => !string.IsNullOrWhiteSpace(line))
+                                          .ToList();
+
+            if (!contentLines.Any())
+            {
+                return ""; 
+            }
+
+            var newBlockquote = string.Join("\n", contentLines.Select(l => $"> {l}"));
+
+            return newBlockquote + "\n\n";
+        });
+
+        // Cleanup extra newlines that might have been created.
+        processedContent = Regex.Replace(processedContent, @"\n{3,}", "\n\n");
+        // Collapse newlines between consecutive blockquotes.
+        processedContent = Regex.Replace(processedContent, @"(\n>.*?\n)\n+(?=>)", "$1\n");
+        // Ensure the document ends with a single newline.
+        return processedContent.TrimEnd() + "\n";
+    }
 }

@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Diagnostics;
+using Obsidian2.Utilities;
 
 namespace Obsidian2;
 
@@ -43,7 +44,7 @@ internal class CompatPostFormatter
             string.IsNullOrWhiteSpace(config.RepoOwner) ||
             string.IsNullOrWhiteSpace(config.RepoName))
         {
-            Console.WriteLine("警告: GitHub配置不完整，无法上传图片到GitHub。请检查配置文件。");
+            Console.WriteLine("Warning: GitHub configuration is incomplete, cannot upload images to GitHub. Please check your configuration file.");
             return;
         }
 
@@ -56,10 +57,10 @@ internal class CompatPostFormatter
                                                        config.ImageBasePath
                                                       );
 
-            Console.WriteLine($"已初始化GitHub上传器，将上传图片到 {config.RepoOwner}/{config.RepoName} 仓库");
+            Console.WriteLine($"GitHub uploader initialized, will upload images to {config.RepoOwner}/{config.RepoName} repository");
         } catch (Exception ex)
         {
-            Console.WriteLine($"初始化GitHub上传器失败: {ex.Message}");
+            Console.WriteLine($"Failed to initialize GitHub uploader: {ex.Message}");
         }
     }
 
@@ -68,97 +69,22 @@ internal class CompatPostFormatter
     {
         string content = await File.ReadAllTextAsync(m_InputFile.FullName);
 
-        // 处理图片链接
         content = await ProcessImageLinks(content);
 
-        // 处理表格
         content = ProcessTables(content);
 
-        // 处理Obsidian的callout为兼容的格式
-        content = ProcessCallouts(content);
+        content = AdmonitionsFormatter.FormatMkDocsCalloutToQuote(content);
 
-        // 将HTML图片标签转换为Markdown格式
         content = ConvertHtmlImgToMarkdown(content);
 
-        // 修复Markdown图片链接中的空格问题
         content = FixMarkdownImageLinks(content);
 
-        // 写入转换后的文件
         await File.WriteAllTextAsync(m_OutputFilePath, content);
 
-        // 清理未使用的图片
+        // Cleanup unused images
         CleanupUnusedImages();
 
-        Console.WriteLine($"转换完成，文件已保存到：{m_OutputFilePath}");
-    }
-
-    /// <summary>
-    /// 将Obsidian的callout格式转换为兼容的简单引用格式
-    /// </summary>
-    private string ProcessCallouts(string content)
-    {
-        // 匹配Obsidian的callout格式，例如：> [!note]\n>\n> 内容
-        // 该方法会匹配 > [!type] 开头的 callout 块，并去除标题和空行
-        var calloutPattern = @">\s*\[!([a-zA-Z]+)\].*?\n((?:>\s*.*(?:\n|$))+)";
-
-        // 先处理所有的callout
-        var processedContent = Regex.Replace(content, calloutPattern, match =>
-        {
-            // 提取callout内容部分
-            string calloutContent = match.Groups[2].Value;
-            string[] lines = calloutContent.Split('\n');
-
-            // 移除每行开头的> 和空格，重新构建为单个引用块
-            StringBuilder newContent = new StringBuilder();
-            bool previousLineIsEmpty = false;
-
-            foreach (var line in lines)
-            {
-                // 检查是否为空行（只包含 ">" 或 "> " 或空白）
-                bool isEmptyLine = string.IsNullOrWhiteSpace(line) ||
-                                   Regex.IsMatch(line, @"^\s*>\s*$");
-
-                if (isEmptyLine)
-                {
-                    // 避免连续的空行
-                    if (!previousLineIsEmpty)
-                    {
-                        previousLineIsEmpty = true;
-                    }
-
-                    continue;
-                }
-
-                previousLineIsEmpty = false;
-                string cleanLine = line.TrimStart();
-
-                // 去除行首的引用符号和空格
-                if (cleanLine.StartsWith(">"))
-                {
-                    cleanLine = cleanLine.Substring(1).TrimStart();
-                }
-
-                // 如果不是空行，添加到新内容中，确保有引用符号
-                if (!string.IsNullOrWhiteSpace(cleanLine))
-                {
-                    newContent.AppendLine($"> {cleanLine}");
-                }
-            }
-
-            // 确保引用块后面有一个空行，这样知乎可以正确识别引用块
-            return newContent.ToString().TrimEnd() + "\n\n";
-        });
-
-        // 移除连续的多个空行，保持最多两个空行
-        processedContent = Regex.Replace(processedContent, @"\n{3,}", "\n\n");
-
-        // 移除两个不同blockquote之间的多余空行，保持一个空行分隔
-        processedContent = Regex.Replace(processedContent, @"(\n>.*?\n)\n+(?=>)", "$1\n");
-
-        // 确保文档最后不会有过多的空行
-        processedContent = processedContent.TrimEnd() + "\n";
-
-        return processedContent;
+        Console.WriteLine($"Conversion complete, file saved to: {m_OutputFilePath}");
     }
 
     private async Task<string> ProcessImageLinks(string content)
@@ -257,7 +183,7 @@ internal class CompatPostFormatter
                 }
                 else
                 {
-                    Console.WriteLine($"警告：上传到GitHub需要将SVG转换为PNG，但转换失败。请确保安装了Inkscape。");
+                    Console.WriteLine($"Warning: Uploading to GitHub requires converting SVG to PNG, but the conversion failed. Please ensure Inkscape is installed.");
                 }
             }
             else
@@ -283,7 +209,7 @@ internal class CompatPostFormatter
 
                 if (!string.IsNullOrEmpty(githubUrl))
                 {
-                    Console.WriteLine($"图片 {Path.GetFileName(destImagePath)} 已上传到GitHub: {githubUrl}");
+                    Console.WriteLine($"Image {Path.GetFileName(destImagePath)} has been uploaded to GitHub: {githubUrl}");
                     return githubUrl;
                 }
             }
@@ -295,7 +221,7 @@ internal class CompatPostFormatter
             return $"{m_GithubRepoPrefix}{noteName}/{encodedImageName}";
         } catch (Exception ex)
         {
-            Console.WriteLine($"处理图片时出错：{ex.Message}");
+            Console.WriteLine($"Error processing image: {ex.Message}");
             return string.Empty;
         }
     }
@@ -307,18 +233,18 @@ internal class CompatPostFormatter
             // 尝试使用 Inkscape 进行转换（如果安装了）
             if (TryConvertWithInkscape(svgPath, pngPath))
             {
-                Console.WriteLine($"成功将 SVG 转换为 PNG: {Path.GetFileName(svgPath)}");
+                Console.WriteLine($"Successfully converted SVG to PNG: {Path.GetFileName(svgPath)}");
                 return true;
             }
 
             // 没有找到合适的转换工具，复制原始 SVG
-            Console.WriteLine($"警告：无法将 SVG 转换为 PNG。请确保安装了 Inkscape 并添加到 PATH 中。");
-            Console.WriteLine($"复制原始 SVG 文件: {Path.GetFileName(svgPath)}");
+            Console.WriteLine($"Warning: Could not convert SVG to PNG. Please ensure Inkscape is installed and added to your PATH.");
+            Console.WriteLine($"Copying original SVG file: {Path.GetFileName(svgPath)}");
             File.Copy(svgPath, Path.Combine(m_AssetsFolderPath, Path.GetFileName(svgPath)), true);
             return false;
         } catch (Exception ex)
         {
-            Console.WriteLine($"SVG 转 PNG 出错: {ex.Message}");
+            Console.WriteLine($"Error converting SVG to PNG: {ex.Message}");
             return false;
         }
     }
@@ -382,26 +308,26 @@ internal class CompatPostFormatter
             File.Copy(sourcePath, destPath);
 
             var fileSize = new FileInfo(sourcePath).Length / 1024.0;
-            Console.WriteLine($"警告：图片 {Path.GetFileName(sourcePath)} 大小为 {fileSize:F2}KB，" +
-                              $"超过了建议大小（{k_CompressThreshold / 1024}KB）。");
-            Console.WriteLine("平台可能会压缩这个图片。建议手动优化图片大小。");
+            Console.WriteLine($"Warning: Image {Path.GetFileName(sourcePath)} size is {fileSize:F2}KB, " +
+                              $"which exceeds the recommended size of {k_CompressThreshold / 1024}KB.");
+            Console.WriteLine("The platform may compress this image. It is recommended to optimize the image size manually.");
         } catch (Exception ex)
         {
-            Console.WriteLine($"复制图片时出错：{ex.Message}");
+            Console.WriteLine($"Error copying image: {ex.Message}");
             // 尝试直接复制
             try
             {
                 File.Copy(sourcePath, destPath);
             } catch
             {
-                Console.WriteLine($"无法复制图片 {sourcePath}");
+                Console.WriteLine($"Could not copy image {sourcePath}");
             }
         }
     }
 
     private string ProcessTables(string content)
     {
-        // 给表格行后添加额外的换行符
+        // 给表格行后添加额外的���行符
         return Regex.Replace(content, @"\|\n", "|\n\n");
     }
 
@@ -425,7 +351,7 @@ internal class CompatPostFormatter
             }
 
             // 对URL中的空格进行编码
-            src = EncodeSpacesInUrl(src);
+            src = PathUtils.EncodeSpacesInUrl(src);
 
             // 转换为Markdown格式
             return $"![{alt}]({src})";
@@ -433,7 +359,7 @@ internal class CompatPostFormatter
     }
 
     /// <summary>
-    /// 修复Markdown图片链接中的空格问题
+    /// 修复Markdown��片链接中的空格问题
     /// </summary>
     private string FixMarkdownImageLinks(string content)
     {
@@ -446,44 +372,10 @@ internal class CompatPostFormatter
             string url = match.Groups[2].Value;
 
             // 对URL中的空格进行编码
-            string encodedUrl = EncodeSpacesInUrl(url);
+            string encodedUrl = PathUtils.EncodeSpacesInUrl(url);
 
             return $"![{alt}]({encodedUrl})";
         });
-    }
-
-    /// <summary>
-    /// 对URL中的空格进行编码，转换为%20
-    /// </summary>
-    private string EncodeSpacesInUrl(string url)
-    {
-        // 检查URL是否是HTTP/HTTPS链接
-        if (url.StartsWith("http://") || url.StartsWith("https://"))
-        {
-            // 将URL解析为Uri对象
-            try
-            {
-                var uri = new Uri(url);
-                string scheme = uri.Scheme;
-                string host = uri.Host;
-                string path = uri.AbsolutePath;
-                string query = uri.Query;
-
-                // 对路径中的空格进行编码
-                string encodedPath = path.Replace(" ", "%20");
-
-                // 重建URL
-                string result = $"{scheme}://{host}{encodedPath}{query}";
-                return result;
-            } catch
-            {
-                // 如果URL解析失败，回退到简单替换
-                return url.Replace(" ", "%20");
-            }
-        }
-
-        // 对于非HTTP/HTTPS链接，直接替换空格
-        return url.Replace(" ", "%20");
     }
 
     private void CleanupUnusedImages()
@@ -496,9 +388,10 @@ internal class CompatPostFormatter
             string imageName = Path.GetFileName(imagePath);
             if (!m_UsedImages.Contains(imageName))
             {
-                Console.WriteLine($"删除未使用的图片：{imageName}, {imagePath}");
+                Console.WriteLine($"Deleting unused image: {imageName}, {imagePath}");
                 File.Delete(imagePath);
             }
         }
     }
 }
+

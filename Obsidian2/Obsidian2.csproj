@@ -19,6 +19,8 @@
         <PackageReference Include="TinyPinyin.Net" Version="1.0.2"/>
         <PackageReference Include="YamlDotNet" Version="13.7.1"/>
         <EmbeddedResource Include="Resources/configuration.json"/>
+    </ItemGroup>    <ItemGroup>
+  <Folder Include="Utilities\" />
     </ItemGroup>
 
 </Project>

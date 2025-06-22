@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using TinyPinyin;
+using Obsidian2.Utilities;
 
 namespace Obsidian2;
 
@@ -10,7 +11,7 @@ internal static class HexoPostStyleAdapter
     public static string AdaptPostPath(string path)
     {
         string ret = MakeChineseToPinyin(path);
-        ret = ConvertSpaceToUnderScore(ret);
+        ret = PathUtils.SanitizeFolderName(ret);
         return ret.ToLower();
 
         string MakeChineseToPinyin(string text)
@@ -40,7 +41,7 @@ internal static class HexoPostStyleAdapter
 
     public static string AdaptAssetPath(string path)
     {
-        string ret = ConvertSpaceToUnderScore(path);
+        string ret = PathUtils.SanitizeFolderName(path);
         return ret.ToLower();
     }
 
@@ -88,7 +89,7 @@ internal static class HexoPostStyleAdapter
         linkRelativePath = AdaptPostPath(linkRelativePath);
         return $"[{linkText}]({linkRelativePath}{fragment})";
 
-        string AdaptTitleFragment(string path) { return ConvertDotToUnderScore(ConvertSpaceToUnderScore(path)); }
+        string AdaptTitleFragment(string path) { return PathUtils.SanitizeFolderName(path); }
     }
 
     public static string AdaptAdmonition(string calloutContent, string type)
@@ -100,14 +101,5 @@ internal static class HexoPostStyleAdapter
     {
         return "/" + Path.GetFileNameWithoutExtension(filePath);
     }
-
-    private static string ConvertSpaceToUnderScore(string path)
-    {
-        string ret = path.Replace(" ", "_");
-        ret = ret.Replace("%20", "_");
-
-        return ret;
-    }
-
-    private static string ConvertDotToUnderScore(string path) { return path.Replace(".", "_"); }
 }
+
