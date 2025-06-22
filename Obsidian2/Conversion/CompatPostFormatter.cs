@@ -7,23 +7,19 @@ namespace Obsidian2;
 internal class CompatPostFormatter
 {
     private readonly FileInfo m_InputFile;
-    private readonly bool m_CompressImages;
     private readonly List<string> m_UsedImages = new();
     private string m_OutputFilePath;
     private string m_AssetsFolderPath;
-
-    private const long k_CompressThreshold = 500 * 1024;
 
     private string m_GithubRepoPrefix = null;
 
     private GitHubImageUploader m_GitHubUploader;
 
-    public CompatPostFormatter(FileInfo inputFile, DirectoryInfo outputDir, bool compressImages)
+    public CompatPostFormatter(FileInfo inputFile, DirectoryInfo outputDir)
     {
         m_InputFile = inputFile;
         m_OutputFilePath = Path.Combine(outputDir.FullName,
                                         Path.GetFileNameWithoutExtension(inputFile.Name) + "_compat.md");
-        m_CompressImages = compressImages;
         m_AssetsFolderPath = Path.Combine(outputDir.FullName, Path.GetFileNameWithoutExtension(inputFile.Name));
 
         if (!outputDir.Exists) outputDir.Create();
@@ -57,7 +53,8 @@ internal class CompatPostFormatter
                                                       );
 
             Console.WriteLine($"GitHub uploader initialized, will upload images to {config.RepoOwner}/{config.RepoName} repository");
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             Console.WriteLine($"Failed to initialize GitHub uploader: {ex.Message}");
         }
@@ -69,9 +66,9 @@ internal class CompatPostFormatter
 
         // 处理所有图片链接和格式化
         content = await ProcessImageLinks(content);
-        content = ProcessTables(content);
+        content = MarkdownConverter.FormatMarkdownTables(content);
         content = AdmonitionsFormatter.FormatMkDocsCalloutToQuote(content);
-        content = ConvertHtmlImgToMarkdown(content);
+        content = MarkdownConverter.ConvertHtmlImgToMarkdown(content);
 
         // 写入文件并清理
         await File.WriteAllTextAsync(m_OutputFilePath, content);
@@ -79,7 +76,6 @@ internal class CompatPostFormatter
 
         Console.WriteLine($"Conversion complete, file saved to: {m_OutputFilePath}");
     }
-
     private async Task<string> ProcessImageLinks(string content)
     {
         content = await ProcessImageLinksWithPattern(content,
@@ -113,72 +109,45 @@ internal class CompatPostFormatter
         return content;
     }
 
-    /// <summary>
-    /// 转换并上传图片，返回正确的URL
-    /// </summary>
     private async Task<string> ProcessImageAsync(string imagePath)
     {
         try
         {
-            // 解码路径并获取完整路径
+            // Decode and get the full path of the image.
             string decodedImagePath = Uri.UnescapeDataString(imagePath);
-            string fullImagePath = GetFullImagePath(decodedImagePath);
+            string fullImagePath = Path.IsPathRooted(decodedImagePath)
+                ? decodedImagePath
+                : Path.GetFullPath(Path.Combine(Path.GetDirectoryName(m_InputFile.FullName) ?? string.Empty,
+                                                decodedImagePath));
 
-            // 生成唯一的图片名称并处理图片
+            // Generate a unique image name and process the image.
             string destImagePath = GetUniqueImagePath(fullImagePath);
             bool isSvg = Path.GetExtension(fullImagePath).Equals(".svg", StringComparison.OrdinalIgnoreCase);
 
             if (isSvg)
             {
-                destImagePath = HandleSvgImage(fullImagePath, destImagePath);
-            }
-            else
-            {
-                HandleRegularImage(fullImagePath, destImagePath);
-            }
+                string pngFileName = Path.GetFileNameWithoutExtension(Path.GetFileName(destImagePath)) + ".png";
+                string pngFilePath = Path.Combine(m_AssetsFolderPath, pngFileName);
 
-            // 记录已使用的图片
-            m_UsedImages.Add(Path.GetFileName(destImagePath));
-
-            // 尝试上传到GitHub并返回URL
-            return await GetImageUrl(destImagePath);
-        } catch (Exception ex)
-        {
-            Console.WriteLine($"Error processing image: {ex.Message}");
-            return string.Empty;
-        }
-        
-        string HandleSvgImage(string fullImagePath, string destImagePath)
-        {
-            string pngFileName = Path.GetFileNameWithoutExtension(Path.GetFileName(destImagePath)) + ".png";
-            string pngFilePath = Path.Combine(m_AssetsFolderPath, pngFileName);
-
-            if (ConvertSvgToPng(fullImagePath, pngFilePath))
-            {
-                return pngFilePath;
-            }
-
-            return destImagePath;
-        }
-
-        void HandleRegularImage(string fullImagePath, string destImagePath)
-        {
-            if (m_CompressImages && new FileInfo(fullImagePath).Length > k_CompressThreshold)
-            {
-                CompressImage(fullImagePath, destImagePath);
+                if (SvgConverter.ConvertSvgToPng(fullImagePath, pngFilePath, m_AssetsFolderPath))
+                {
+                    destImagePath = pngFilePath;
+                }
             }
             else
             {
                 File.Copy(fullImagePath, destImagePath);
             }
-        }
-    }
 
-    private string GetFullImagePath(string imagePath)
-    {
-        return Path.IsPathRooted(imagePath)
-            ? imagePath
-            : Path.GetFullPath(Path.Combine(Path.GetDirectoryName(m_InputFile.FullName) ?? string.Empty, imagePath));
+            m_UsedImages.Add(Path.GetFileName(destImagePath));
+
+            return await GetGithubImageUrl(destImagePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error processing image: {ex.Message}");
+            return string.Empty;
+        }
     }
 
     private string GetUniqueImagePath(string fullImagePath)
@@ -197,10 +166,8 @@ internal class CompatPostFormatter
         return Path.Combine(m_AssetsFolderPath, imgNameNew);
     }
 
-
-    private async Task<string> GetImageUrl(string imagePath)
+    private async Task<string> GetGithubImageUrl(string imagePath)
     {
-        // 如果启用了GitHub上传，上传图片
         if (m_GitHubUploader != null)
         {
             string articleName = Path.GetFileNameWithoutExtension(m_InputFile.Name);
@@ -213,119 +180,11 @@ internal class CompatPostFormatter
             }
         }
 
-        // 构造GitHub原始链接格式
         string noteName = Uri.EscapeDataString(Path.GetFileNameWithoutExtension(m_InputFile.Name));
         string encodedImageName = Uri.EscapeDataString(Path.GetFileName(imagePath));
 
         return $"{m_GithubRepoPrefix}{noteName}/{encodedImageName}";
     }
-
-    private bool ConvertSvgToPng(string svgPath, string pngPath)
-    {
-        try
-        {
-            // 尝试使用 Inkscape 进行转换
-            if (TryConvertWithInkscape(svgPath, pngPath))
-            {
-                Console.WriteLine($"Successfully converted SVG to PNG: {Path.GetFileName(svgPath)}");
-                return true;
-            }
-
-            // 转换失败，提示并复制原始 SVG
-            Console.WriteLine($"Warning: Could not convert SVG to PNG. Please ensure Inkscape is installed and added to your PATH.");
-            Console.WriteLine($"Copying original SVG file: {Path.GetFileName(svgPath)}");
-            File.Copy(svgPath, Path.Combine(m_AssetsFolderPath, Path.GetFileName(svgPath)), true);
-            return false;
-        } catch (Exception ex)
-        {
-            Console.WriteLine($"Error converting SVG to PNG: {ex.Message}");
-            return false;
-        }
-    }
-
-    private bool TryConvertWithInkscape(string svgPath, string pngPath)
-    {
-        // 检查是否安装了 Inkscape 并转换图片
-        try
-        {
-            var processInfo = new ProcessStartInfo
-            {
-                FileName = "inkscape",
-                Arguments = $"--export-filename=\"{pngPath}\" \"{svgPath}\"",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                CreateNoWindow = true
-            };
-
-            using var process = Process.Start(processInfo);
-            if (process == null) return false;
-
-            process.WaitForExit(10000); // 等待最多10秒
-            return File.Exists(pngPath);
-        } catch
-        {
-            return false; // Inkscape 不存在或转换失败
-        }
-    }
-
-    private void CompressImage(string sourcePath, string destPath)
-    {
-        try
-        {
-            // 复制文件
-            File.Copy(sourcePath, destPath);
-
-            // 显示警告信息
-            var fileSize = new FileInfo(sourcePath).Length / 1024.0;
-            Console.WriteLine($"Warning: Image {Path.GetFileName(sourcePath)} size is {fileSize:F2}KB, " +
-                              $"which exceeds the recommended size of {k_CompressThreshold / 1024}KB.");
-            Console.WriteLine("The platform may compress this image. It is recommended to optimize the image size manually.");
-        } catch (Exception ex)
-        {
-            Console.WriteLine($"Error copying image: {ex.Message}");
-            Console.WriteLine($"Could not copy image {sourcePath}");
-        }
-    }
-
-    private string ProcessTables(string content)
-    {
-        // 给表格行后添加额外的���行符
-        return Regex.Replace(content, @"\|\n", "|\n\n");
-    }
-
-    /// <summary>
-    /// 将HTML图片标签&lt;img src="..."&gt;转换为Markdown格式![](...)
-    /// 同时修复Markdown图片链接中的空格问题
-    /// </summary>
-    private string ConvertHtmlImgToMarkdown(string content)
-    {
-        // 首先处理HTML图片标签
-        string htmlPattern = @"<img\s+(?:src=""(.*?)"")?(?:\s+alt=""(.*?)"")?[^>]*>";
-        content = Regex.Replace(content, htmlPattern, match =>
-        {
-            string src = match.Groups[1].Success ? match.Groups[1].Value : "";
-            string alt = match.Groups[2].Success ? match.Groups[2].Value : "";
-
-            if (string.IsNullOrEmpty(src))
-                return match.Value;
-
-            src = PathUtils.EncodeSpacesInUrl(src);
-            return $"![{alt}]({src})";
-        });
-
-        // 然后处理Markdown图片链接中的空格问题
-        string mdPattern = @"!\[(.*?)\]\((.*?)\)";
-        content = Regex.Replace(content, mdPattern, match =>
-        {
-            string alt = match.Groups[1].Value;
-            string url = match.Groups[2].Value;
-            string encodedUrl = PathUtils.EncodeSpacesInUrl(url);
-            return $"![{alt}]({encodedUrl})";
-        });
-
-        return content;
-    }
-
     private void CleanupUnusedImages()
     {
         if (!Directory.Exists(m_AssetsFolderPath))
@@ -343,3 +202,4 @@ internal class CompatPostFormatter
         }
     }
 }
+

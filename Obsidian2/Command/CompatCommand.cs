@@ -18,10 +18,6 @@ internal static class CompatCommand
                                                                 .Combine(Directory.GetCurrentDirectory(),
                                                                          "compat_output")));
 
-        var compressOption = new Option<bool>(name: "--compress",
-                                              description: "Compress images larger than 500KB",
-                                              getDefaultValue: () => true);
-
         var convertSvgOption = new Option<bool>(name: "--convert-svg",
                                                 description:
                                                 "Convert SVG images to PNG format (automatically enabled when uploading to GitHub)",
@@ -30,17 +26,15 @@ internal static class CompatCommand
 
         compatCommand.AddOption(inputOption);
         compatCommand.AddOption(outputDirOption);
-        compatCommand.AddOption(compressOption);
         compatCommand.AddOption(convertSvgOption);
 
         compatCommand.SetHandler(ConvertMarkdownToCompat, inputOption,
-                                 outputDirOption, compressOption, convertSvgOption);
+                                 outputDirOption, convertSvgOption);
 
         return compatCommand;
     }
 
-    private static void ConvertMarkdownToCompat(FileInfo inputFile, DirectoryInfo outputDir, bool compress,
-                                                bool convertSvg)
+    private static void ConvertMarkdownToCompat(FileInfo inputFile, DirectoryInfo outputDir, bool convertSvg)
     {
         if (inputFile == null) throw new ArgumentNullException(nameof(inputFile));
         if (!inputFile.Exists) throw new ArgumentNullException($"Error: Input file {inputFile} does not exist.");
@@ -49,7 +43,7 @@ internal static class CompatCommand
 
         StopWatch.CreateStopWatch("Compatibility Conversion", () =>
         {
-            var formatter = new CompatPostFormatter(inputFile, outputDir, compress);
+            var formatter = new CompatPostFormatter(inputFile, outputDir);
             formatter.Format().Wait();
         });
     }
