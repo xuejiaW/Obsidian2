@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using System.Text;
 using System.Diagnostics;
 using Obsidian2.Utilities;
 
@@ -64,24 +63,18 @@ internal class CompatPostFormatter
         }
     }
 
-
     public async Task Format()
     {
         string content = await File.ReadAllTextAsync(m_InputFile.FullName);
 
+        // 处理所有图片链接和格式化
         content = await ProcessImageLinks(content);
-
         content = ProcessTables(content);
-
         content = AdmonitionsFormatter.FormatMkDocsCalloutToQuote(content);
-
         content = ConvertHtmlImgToMarkdown(content);
 
-        content = FixMarkdownImageLinks(content);
-
+        // 写入文件并清理
         await File.WriteAllTextAsync(m_OutputFilePath, content);
-
-        // Cleanup unused images
         CleanupUnusedImages();
 
         Console.WriteLine($"Conversion complete, file saved to: {m_OutputFilePath}");
@@ -89,51 +82,30 @@ internal class CompatPostFormatter
 
     private async Task<string> ProcessImageLinks(string content)
     {
-        // 处理 Markdown 标准图片语法 ![alt](path)
-        content = await ReplaceMarkdownImagesAsync(content);
+        content = await ProcessImageLinksWithPattern(content,
+                                                     @"!\[(.*?)\]\((.*?)\)",
+                                                     (match, newPath) => $"![{match.Groups[1].Value}]({newPath})");
 
-        // 处理 HTML 图片标签 <img src="path" ...>
-        content = await ReplaceHtmlImagesAsync(content);
-
-        return content;
-    }
-
-    private async Task<string> ReplaceMarkdownImagesAsync(string content)
-    {
-        // 使用正则表达式查找所有的Markdown图片
-        var matches = Regex.Matches(content, @"!\[(.*?)\]\((.*?)\)");
-
-        // 逐一处理每个图片
-        foreach (Match match in matches)
-        {
-            string altText = match.Groups[1].Value;
-            string imagePath = match.Groups[2].Value;
-
-            string newImagePath = await ProcessImageAsync(imagePath);
-            if (!string.IsNullOrEmpty(newImagePath))
-            {
-                string newImageMarkdown = $"![{altText}]({newImagePath})";
-                content = content.Replace(match.Value, newImageMarkdown);
-            }
-        }
+        content = await ProcessImageLinksWithPattern(content,
+                                                     @"<img src=""(.*?)""",
+                                                     (_, newPath) => $"<img src=\"{newPath}\"");
 
         return content;
     }
 
-    private async Task<string> ReplaceHtmlImagesAsync(string content)
+    private async Task<string> ProcessImageLinksWithPattern(string content, string pattern,
+                                                            Func<Match, string, string> replacementBuilder)
     {
-        // 使用正则表达式查找所有的HTML图片标签
-        var matches = Regex.Matches(content, @"<img src=""(.*?)""");
+        MatchCollection matches = Regex.Matches(content, pattern);
 
-        // 逐一处理每个图片
         foreach (Match match in matches)
         {
-            string imagePath = match.Groups[1].Value;
-
+            string imagePath = match.Groups[pattern.Contains("img") ? 1 : 2].Value;
             string newImagePath = await ProcessImageAsync(imagePath);
+
             if (!string.IsNullOrEmpty(newImagePath))
             {
-                string replacement = $"<img src=\"{newImagePath}\"";
+                string replacement = replacementBuilder(match, newImagePath);
                 content = content.Replace(match.Value, replacement);
             }
         }
@@ -148,96 +120,118 @@ internal class CompatPostFormatter
     {
         try
         {
-            // 解码 URL 编码的路径（例如 %20 转换为空格）
+            // 解码路径并获取完整路径
             string decodedImagePath = Uri.UnescapeDataString(imagePath);
+            string fullImagePath = GetFullImagePath(decodedImagePath);
 
-            // 检查是否是相对路径
-            string fullImagePath = Path.IsPathRooted(decodedImagePath)
-                ? decodedImagePath
-                : Path.GetFullPath(Path.Combine(Path.GetDirectoryName(m_InputFile.FullName) ?? string.Empty,
-                                                decodedImagePath));
-
-            // 生成唯一的图片名称
-            string imgStem = Path.GetFileNameWithoutExtension(fullImagePath);
-            string imgSuffix = Path.GetExtension(fullImagePath);
-            string imgNameNew = imgStem + imgSuffix;
-
-            int i = 1;
-            while (File.Exists(Path.Combine(m_AssetsFolderPath, imgNameNew)))
-            {
-                imgNameNew = $"{imgStem}_{i}{imgSuffix}";
-                i++;
-            }
-
-            string destImagePath = Path.Combine(m_AssetsFolderPath, imgNameNew);
-            bool isSvg = imgSuffix.Equals(".svg", StringComparison.OrdinalIgnoreCase);
+            // 生成唯一的图片名称并处理图片
+            string destImagePath = GetUniqueImagePath(fullImagePath);
+            bool isSvg = Path.GetExtension(fullImagePath).Equals(".svg", StringComparison.OrdinalIgnoreCase);
 
             if (isSvg)
             {
-                string pngFileName = Path.GetFileNameWithoutExtension(imgNameNew) + ".png";
-                string pngFilePath = Path.Combine(m_AssetsFolderPath, pngFileName);
-
-                if (ConvertSvgToPng(fullImagePath, pngFilePath))
-                {
-                    destImagePath = pngFilePath;
-                }
-                else
-                {
-                    Console.WriteLine($"Warning: Uploading to GitHub requires converting SVG to PNG, but the conversion failed. Please ensure Inkscape is installed.");
-                }
+                destImagePath = HandleSvgImage(fullImagePath, destImagePath);
             }
             else
             {
-                // 复制或压缩图片
-                if (m_CompressImages && new FileInfo(fullImagePath).Length > k_CompressThreshold)
-                {
-                    CompressImage(fullImagePath, destImagePath);
-                }
-                else
-                {
-                    File.Copy(fullImagePath, destImagePath);
-                }
+                HandleRegularImage(fullImagePath, destImagePath);
             }
 
+            // 记录已使用的图片
             m_UsedImages.Add(Path.GetFileName(destImagePath));
 
-            // 如果启用了GitHub上传，上传图片
-            if (m_GitHubUploader != null)
-            {
-                string articleName = Path.GetFileNameWithoutExtension(m_InputFile.Name);
-                string githubUrl = await m_GitHubUploader.UploadImageAsync(destImagePath, articleName);
-
-                if (!string.IsNullOrEmpty(githubUrl))
-                {
-                    Console.WriteLine($"Image {Path.GetFileName(destImagePath)} has been uploaded to GitHub: {githubUrl}");
-                    return githubUrl;
-                }
-            }
-
-            // 构造GitHub原始链接格式，确保 URL 中的空格被编码为 %20
-            string noteName = Uri.EscapeDataString(Path.GetFileNameWithoutExtension(m_InputFile.Name));
-            string encodedImageName = Uri.EscapeDataString(Path.GetFileName(destImagePath));
-
-            return $"{m_GithubRepoPrefix}{noteName}/{encodedImageName}";
+            // 尝试上传到GitHub并返回URL
+            return await GetImageUrl(destImagePath);
         } catch (Exception ex)
         {
             Console.WriteLine($"Error processing image: {ex.Message}");
             return string.Empty;
         }
+        
+        string HandleSvgImage(string fullImagePath, string destImagePath)
+        {
+            string pngFileName = Path.GetFileNameWithoutExtension(Path.GetFileName(destImagePath)) + ".png";
+            string pngFilePath = Path.Combine(m_AssetsFolderPath, pngFileName);
+
+            if (ConvertSvgToPng(fullImagePath, pngFilePath))
+            {
+                return pngFilePath;
+            }
+
+            return destImagePath;
+        }
+
+        void HandleRegularImage(string fullImagePath, string destImagePath)
+        {
+            if (m_CompressImages && new FileInfo(fullImagePath).Length > k_CompressThreshold)
+            {
+                CompressImage(fullImagePath, destImagePath);
+            }
+            else
+            {
+                File.Copy(fullImagePath, destImagePath);
+            }
+        }
+    }
+
+    private string GetFullImagePath(string imagePath)
+    {
+        return Path.IsPathRooted(imagePath)
+            ? imagePath
+            : Path.GetFullPath(Path.Combine(Path.GetDirectoryName(m_InputFile.FullName) ?? string.Empty, imagePath));
+    }
+
+    private string GetUniqueImagePath(string fullImagePath)
+    {
+        string imgStem = Path.GetFileNameWithoutExtension(fullImagePath);
+        string imgSuffix = Path.GetExtension(fullImagePath);
+        string imgNameNew = imgStem + imgSuffix;
+
+        int i = 1;
+        while (File.Exists(Path.Combine(m_AssetsFolderPath, imgNameNew)))
+        {
+            imgNameNew = $"{imgStem}_{i}{imgSuffix}";
+            i++;
+        }
+
+        return Path.Combine(m_AssetsFolderPath, imgNameNew);
+    }
+
+
+    private async Task<string> GetImageUrl(string imagePath)
+    {
+        // 如果启用了GitHub上传，上传图片
+        if (m_GitHubUploader != null)
+        {
+            string articleName = Path.GetFileNameWithoutExtension(m_InputFile.Name);
+            string githubUrl = await m_GitHubUploader.UploadImageAsync(imagePath, articleName);
+
+            if (!string.IsNullOrEmpty(githubUrl))
+            {
+                Console.WriteLine($"Image {Path.GetFileName(imagePath)} has been uploaded to GitHub: {githubUrl}");
+                return githubUrl;
+            }
+        }
+
+        // 构造GitHub原始链接格式
+        string noteName = Uri.EscapeDataString(Path.GetFileNameWithoutExtension(m_InputFile.Name));
+        string encodedImageName = Uri.EscapeDataString(Path.GetFileName(imagePath));
+
+        return $"{m_GithubRepoPrefix}{noteName}/{encodedImageName}";
     }
 
     private bool ConvertSvgToPng(string svgPath, string pngPath)
     {
         try
         {
-            // 尝试使用 Inkscape 进行转换（如果安装了）
+            // 尝试使用 Inkscape 进行转换
             if (TryConvertWithInkscape(svgPath, pngPath))
             {
                 Console.WriteLine($"Successfully converted SVG to PNG: {Path.GetFileName(svgPath)}");
                 return true;
             }
 
-            // 没有找到合适的转换工具，复制原始 SVG
+            // 转换失败，提示并复制原始 SVG
             Console.WriteLine($"Warning: Could not convert SVG to PNG. Please ensure Inkscape is installed and added to your PATH.");
             Console.WriteLine($"Copying original SVG file: {Path.GetFileName(svgPath)}");
             File.Copy(svgPath, Path.Combine(m_AssetsFolderPath, Path.GetFileName(svgPath)), true);
@@ -251,51 +245,26 @@ internal class CompatPostFormatter
 
     private bool TryConvertWithInkscape(string svgPath, string pngPath)
     {
+        // 检查是否安装了 Inkscape 并转换图片
         try
         {
-            // 检查是否安装了 Inkscape
-            var process = new Process
+            var processInfo = new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "inkscape",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true
-                }
+                FileName = "inkscape",
+                Arguments = $"--export-filename=\"{pngPath}\" \"{svgPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
             };
 
-            try
-            {
-                process.Start();
-                process.WaitForExit(3000); // 等待最多3秒
+            using var process = Process.Start(processInfo);
+            if (process == null) return false;
 
-                // 如果 Inkscape 存在，使用它转换 SVG 到 PNG
-                var convertProcess = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "inkscape",
-                        Arguments = $"--export-filename=\"{pngPath}\" \"{svgPath}\"",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        CreateNoWindow = true
-                    }
-                };
-
-                convertProcess.Start();
-                convertProcess.WaitForExit(10000); // 等待最多10秒
-
-                return File.Exists(pngPath);
-            } catch (Exception)
-            {
-                // Inkscape 不存在
-                return false;
-            }
+            process.WaitForExit(10000); // 等待最多10秒
+            return File.Exists(pngPath);
         } catch
         {
-            return false;
+            return false; // Inkscape 不存在或转换失败
         }
     }
 
@@ -303,10 +272,10 @@ internal class CompatPostFormatter
     {
         try
         {
-            // 由于我们没有添加 System.Drawing.Common 依赖，
-            // 这里简单地复制文件并添加警告消息
+            // 复制文件
             File.Copy(sourcePath, destPath);
 
+            // 显示警告信息
             var fileSize = new FileInfo(sourcePath).Length / 1024.0;
             Console.WriteLine($"Warning: Image {Path.GetFileName(sourcePath)} size is {fileSize:F2}KB, " +
                               $"which exceeds the recommended size of {k_CompressThreshold / 1024}KB.");
@@ -314,14 +283,7 @@ internal class CompatPostFormatter
         } catch (Exception ex)
         {
             Console.WriteLine($"Error copying image: {ex.Message}");
-            // 尝试直接复制
-            try
-            {
-                File.Copy(sourcePath, destPath);
-            } catch
-            {
-                Console.WriteLine($"Could not copy image {sourcePath}");
-            }
+            Console.WriteLine($"Could not copy image {sourcePath}");
         }
     }
 
@@ -333,49 +295,35 @@ internal class CompatPostFormatter
 
     /// <summary>
     /// 将HTML图片标签&lt;img src="..."&gt;转换为Markdown格式![](...)
+    /// 同时修复Markdown图片链接中的空格问题
     /// </summary>
     private string ConvertHtmlImgToMarkdown(string content)
     {
-        // 匹配完整的HTML图片标签，包括可选的alt属性和其他属性
-        string pattern = @"<img\s+(?:src=""(.*?)"")?(?:\s+alt=""(.*?)"")?[^>]*>";
-
-        return Regex.Replace(content, pattern, match =>
+        // 首先处理HTML图片标签
+        string htmlPattern = @"<img\s+(?:src=""(.*?)"")?(?:\s+alt=""(.*?)"")?[^>]*>";
+        content = Regex.Replace(content, htmlPattern, match =>
         {
             string src = match.Groups[1].Success ? match.Groups[1].Value : "";
             string alt = match.Groups[2].Success ? match.Groups[2].Value : "";
 
             if (string.IsNullOrEmpty(src))
-            {
-                // 如果没有src属性，则保持原样
                 return match.Value;
-            }
 
-            // 对URL中的空格进行编码
             src = PathUtils.EncodeSpacesInUrl(src);
-
-            // 转换为Markdown格式
             return $"![{alt}]({src})";
         });
-    }
 
-    /// <summary>
-    /// 修复Markdown��片链接中的空格问题
-    /// </summary>
-    private string FixMarkdownImageLinks(string content)
-    {
-        // 匹配Markdown图片链接：![alt](url)
-        string pattern = @"!\[(.*?)\]\((.*?)\)";
-
-        return Regex.Replace(content, pattern, match =>
+        // 然后处理Markdown图片链接中的空格问题
+        string mdPattern = @"!\[(.*?)\]\((.*?)\)";
+        content = Regex.Replace(content, mdPattern, match =>
         {
             string alt = match.Groups[1].Value;
             string url = match.Groups[2].Value;
-
-            // 对URL中的空格进行编码
             string encodedUrl = PathUtils.EncodeSpacesInUrl(url);
-
             return $"![{alt}]({encodedUrl})";
         });
+
+        return content;
     }
 
     private void CleanupUnusedImages()
@@ -383,15 +331,15 @@ internal class CompatPostFormatter
         if (!Directory.Exists(m_AssetsFolderPath))
             return;
 
-        foreach (string imagePath in Directory.GetFiles(m_AssetsFolderPath))
+        var files = Directory.GetFiles(m_AssetsFolderPath);
+        foreach (string imagePath in files)
         {
             string imageName = Path.GetFileName(imagePath);
             if (!m_UsedImages.Contains(imageName))
             {
-                Console.WriteLine($"Deleting unused image: {imageName}, {imagePath}");
+                Console.WriteLine($"Deleting unused image: {imageName}");
                 File.Delete(imagePath);
             }
         }
     }
 }
-
