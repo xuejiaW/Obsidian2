@@ -26,6 +26,7 @@ internal class HexoPostFormatter
         ret = FormatBlockLink(ret, m_SrcNotePath);
         ret = CleanBlockLinkMark(ret);
         ret = FormatMdLinkToHexoStyle(ret);
+        ret = FormatHtmlImagePaths(ret);
         await File.WriteAllTextAsync(m_DstPostPath, ret);
     }
 
@@ -145,6 +146,30 @@ internal class HexoPostFormatter
             string linkRelativePath = match.Groups[2].Value;
 
             return Adapter.AdaptLink(linkText, linkRelativePath, m_SrcNotePath, m_DstPostPath);
+        }
+    }
+
+    private string FormatHtmlImagePaths(string content)
+    {
+        string pattern = @"<img\s+([^>]*?)src=""([^""]*?)""([^>]*?)>";
+        return Regex.Replace(content, pattern, ReplaceImagePath);
+
+        string ReplaceImagePath(Match match)
+        {
+            string beforeSrc = match.Groups[1].Value;
+            string srcPath = match.Groups[2].Value;
+            string afterSrc = match.Groups[3].Value;
+            
+            if (srcPath.StartsWith("assets/"))
+            {
+                srcPath = srcPath.Substring("assets/".Length);
+            }
+            
+            string processedPath = Adapter.AdaptAssetPath(srcPath);
+            
+            processedPath = "/" + processedPath;
+            
+            return $"<img {beforeSrc}src=\"{processedPath}\"{afterSrc}>";
         }
     }
 }
