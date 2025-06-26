@@ -8,7 +8,7 @@
         <Nullable>disable</Nullable>
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>obsidian2</ToolCommandName>
-        <Version>0.2.0</Version>
+        <Version>0.2.1</Version>
         <PackageOutputPath>./nupkg</PackageOutputPath>
         <NoWarn>$(NoWarn);NETSDK1138;CS0649</NoWarn>
     </PropertyGroup>    <ItemGroup>
