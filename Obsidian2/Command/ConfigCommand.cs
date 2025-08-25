@@ -1,20 +1,46 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 
 namespace Obsidian2;
 
-public static class SetCommand
+public static class ConfigCommand
 {
     internal static Command CreateCommand()
     {
-        var setCommand = new Command("set", "Set Configuration");
-        setCommand.AddCommand(CreateSetHexoPostsDirCmd());
-        setCommand.AddCommand(CreateSetObsidianVaultDirCmd());
-        setCommand.AddCommand(CreateSetGitHubTokenCmd());
-        setCommand.AddCommand(CreateSetGitHubOwnerCmd());
-        setCommand.AddCommand(CreateSetGitHubRepoCmd());
-        setCommand.AddCommand(CreateSetGitHubBranchCmd());
-        setCommand.AddCommand(CreateSetGitHubImagePathCmd());
-        return setCommand;
+        var configCommand = new Command("config", "Manage configuration settings");
+        
+        var listOption = new Option<bool>("--list", "List all configuration settings");
+        configCommand.AddOption(listOption);
+        configCommand.SetHandler(HandleListOption, listOption);
+        
+        configCommand.AddCommand(CreateSetHexoPostsDirCmd());
+        configCommand.AddCommand(CreateSetObsidianVaultDirCmd());
+        configCommand.AddCommand(CreateSetGitHubTokenCmd());
+        configCommand.AddCommand(CreateSetGitHubOwnerCmd());
+        configCommand.AddCommand(CreateSetGitHubRepoCmd());
+        configCommand.AddCommand(CreateSetGitHubBranchCmd());
+        configCommand.AddCommand(CreateSetGitHubImagePathCmd());
+        
+        return configCommand;
+    }
+
+    private static void HandleListOption(bool listAll)
+    {
+        if (!listAll) return;
+        
+        var config = ConfigurationMgr.configuration;
+        
+        Console.WriteLine("Current Configuration:");
+        Console.WriteLine("=====================");
+        Console.WriteLine($"Obsidian Vault Path: {config.obsidianVaultPath ?? "Not set"}");
+        Console.WriteLine($"Hexo Posts Path: {config.hexoPostsPath ?? "Not set"}");
+        Console.WriteLine($"Ignored Paths: {(config.ignoresPaths.Any() ? string.Join(", ", config.ignoresPaths) : "None")}");
+        Console.WriteLine();
+        Console.WriteLine("GitHub Configuration:");
+        Console.WriteLine($"  Repository Owner: {config.GitHub.RepoOwner ?? "Not set"}");
+        Console.WriteLine($"  Repository Name: {config.GitHub.RepoName ?? "Not set"}");
+        Console.WriteLine($"  Branch Name: {config.GitHub.BranchName}");
+        Console.WriteLine($"  Image Base Path: {config.GitHub.ImageBasePath}");
+        Console.WriteLine($"  Personal Access Token: {(string.IsNullOrEmpty(config.GitHub.PersonalAccessToken) ? "Not set" : "***")}");
     }
 
     private static Command CreateSetHexoPostsDirCmd()
@@ -31,6 +57,7 @@ public static class SetCommand
 
             ConfigurationMgr.configuration.hexoPostsPath = hexoPostsDir.FullName;
             ConfigurationMgr.Save();
+            Console.WriteLine("Hexo posts directory has been set.");
         }
     }
 
@@ -47,6 +74,7 @@ public static class SetCommand
             Utils.CheckDirectory(obsidianVaultDir, "Obsidian vault directory");
             ConfigurationMgr.configuration.obsidianVaultPath = obsidianVaultDir.FullName;
             ConfigurationMgr.Save();
+            Console.WriteLine("Obsidian vault directory has been set.");
         }
     }
 
@@ -130,4 +158,3 @@ public static class SetCommand
         }
     }
 }
-

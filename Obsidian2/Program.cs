@@ -8,7 +8,7 @@ namespace Obsidian2
         {
             var rootCommand = new RootCommand();
             rootCommand.AddCommand(HexoCommand.CreateCommand());
-            rootCommand.AddCommand(SetCommand.CreateCommand());
+            rootCommand.AddCommand(ConfigCommand.CreateCommand());
             rootCommand.AddCommand(IgnoreCommand.CreateCommand());
             rootCommand.AddCommand(CompatCommand.CreateCommand());
             rootCommand.AddCommand(ZhihuCommand.CreateCommand());
