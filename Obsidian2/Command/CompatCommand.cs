@@ -28,6 +28,9 @@ internal static class CompatCommand
         compatCommand.AddOption(outputDirOption);
         compatCommand.AddOption(convertSvgOption);
 
+        // Add config subcommand
+        compatCommand.AddCommand(CompatConfigCommand.CreateCommand());
+
         compatCommand.SetHandler(ConvertMarkdownToCompat, inputOption,
                                  outputDirOption, convertSvgOption);
 
