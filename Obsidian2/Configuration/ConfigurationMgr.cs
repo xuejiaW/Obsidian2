@@ -30,6 +30,12 @@ public static class ConfigurationMgr
         File.WriteAllText(s_ConfigurationPath, json);
     }
 
+    public static void UpdateConfiguration(Configuration newConfiguration)
+    {
+        configuration = newConfiguration;
+        Save();
+    }
+
     private static void CreateInitialConfiguration()
     {
         using Stream stream = Assembly.GetExecutingAssembly()

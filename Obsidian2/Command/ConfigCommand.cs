@@ -21,6 +21,8 @@ public static class ConfigCommand
         configCommand.AddCommand(ConfigGitHubCommand.CreateBranchCommand());
         configCommand.AddCommand(ConfigGitHubCommand.CreateImagePathCommand());
         configCommand.AddCommand(ConfigIgnoreCommand.CreateCommand());
+        configCommand.AddCommand(ConfigImportExportCommand.CreateExportCommand());
+        configCommand.AddCommand(ConfigImportExportCommand.CreateImportCommand());
         
         return configCommand;
     }
