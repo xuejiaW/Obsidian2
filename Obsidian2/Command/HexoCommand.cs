@@ -22,6 +22,10 @@ internal static class HexoCommand
 
         hexoCommand.AddOption(obsidianOption);
         hexoCommand.AddOption(hexoOption);
+        
+        // Add config subcommand
+        hexoCommand.AddCommand(HexoConfigCommand.CreateCommand());
+        
         hexoCommand.SetHandler(ConvertObsidian2Hexo, obsidianOption, hexoOption);
         return hexoCommand;
     }
