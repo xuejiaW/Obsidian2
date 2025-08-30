@@ -2,7 +2,7 @@ using System.CommandLine;
 
 namespace Obsidian2;
 
-public static class CompatAssetsRepoCommand
+public static class CompatConfigAssetsRepoCommand
 {
     internal static Command CreateCommand()
     {

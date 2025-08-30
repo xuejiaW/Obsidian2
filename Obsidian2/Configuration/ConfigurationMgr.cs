@@ -53,7 +53,7 @@ public static class ConfigurationMgr
 
     public static void Save()
     {
-        string json = JsonConvert.SerializeObject(configuration);
+        string json = JsonConvert.SerializeObject(configuration, Formatting.Indented);
         File.WriteAllText(configurationPath, json);
     }
 

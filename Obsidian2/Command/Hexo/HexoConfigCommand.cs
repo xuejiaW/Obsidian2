@@ -12,7 +12,7 @@ public static class HexoConfigCommand
         configCommand.AddOption(listOption);
         configCommand.SetHandler(HandleListOption, listOption);
         
-        configCommand.AddCommand(CreatePostsDirCommand());
+        configCommand.AddCommand(HexoConfigPostsDirCommand.CreateCommand());
         
         return configCommand;
     }
@@ -26,23 +26,5 @@ public static class HexoConfigCommand
         Console.WriteLine("Hexo Configuration:");
         Console.WriteLine("==================");
         Console.WriteLine($"Posts Directory: {config.hexoPostsPath ?? "Not set"}");
-    }
-
-    private static Command CreatePostsDirCommand()
-    {
-        var postsDirCmd = new Command("posts-dir", "Set Hexo posts directory");
-        var hexoPostsDirArg = new Argument<DirectoryInfo>("directory", "Path to Hexo posts directory");
-        postsDirCmd.AddArgument(hexoPostsDirArg);
-        postsDirCmd.SetHandler(SetPostsDir, hexoPostsDirArg);
-        return postsDirCmd;
-
-        void SetPostsDir(DirectoryInfo hexoPostsDir)
-        {
-            Utils.CheckDirectory(hexoPostsDir, "Hexo posts directory");
-
-            ConfigurationMgr.configuration.hexoPostsPath = hexoPostsDir.FullName;
-            ConfigurationMgr.Save();
-            Console.WriteLine("Hexo posts directory has been set.");
-        }
     }
 }

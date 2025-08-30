@@ -13,7 +13,7 @@ public static class CompatConfigCommand
         configCommand.AddOption(listOption);
         configCommand.SetHandler(HandleListOption, listOption);
         
-        configCommand.AddCommand(CompatAssetsRepoCommand.CreateCommand());
+        configCommand.AddCommand(CompatConfigAssetsRepoCommand.CreateCommand());
         
         return configCommand;
     }
