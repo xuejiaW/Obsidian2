@@ -1,46 +1,46 @@
 {
-  "$schema": "https://raw.githubusercontent.com/dotnet/docfx/main/schemas/docfx.schema.json",
-  "metadata": [
-    {
-      "src": [
+    "metadata": [
         {
-          "src": "../",
-          "files": [
-            "**/*.csproj"
-          ]
+            "src": [
+                {
+                    "src": "../",
+                    "files": [
+                        "**/*.csproj"
+                    ]
+                }
+            ],
+            "dest": "api",
+            "memberLayout": "separatePages"
         }
-      ],
-      "dest": "api"
-    }
-  ],
-  "build": {
-    "content": [
-      {
-        "files": [
-          "**/*.{md,yml}"
+    ],
+    "build": {
+        "content": [
+            {
+                "files": [
+                    "**/*.{md,yml}"
+                ],
+                "exclude": [
+                    "_site/**"
+                ]
+            }
         ],
-        "exclude": [
-          "_site/**"
-        ]
-      }
-    ],
-    "resource": [
-      {
-        "files": [
-          "images/**"
-        ]
-      }
-    ],
-    "output": "_site",
-    "template": [
-      "default",
-      "modern"
-    ],
-    "globalMetadata": {
-      "_appName": "Obsidian2",
-      "_appTitle": "Obsidian2",
-      "_enableSearch": true,
-      "pdf": true
+        "resource": [
+            {
+                "files": [
+                    "images/**"
+                ]
+            }
+        ],
+        "output": "_site",
+        "template": [
+            "default",
+            "templates/unity"
+        ],
+        "globalMetadata": {
+            "_appName": "Obsidian2",
+            "_appTitle": "Obsidian2",
+            "_enableSearch": true,
+            "pdf": false
+        }
     }
-  }
 }
