@@ -33,4 +33,11 @@ public class HexoConfig : ICommandConfig
 
         return true;
     }
+
+    public void DisplayConfiguration()
+    {
+        Console.WriteLine("Hexo Configuration:");
+        Console.WriteLine("==================");
+        Console.WriteLine($"Posts Directory: {postsPath ?? "Not set"}");
+    }
 }
