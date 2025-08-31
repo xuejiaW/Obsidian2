@@ -9,7 +9,7 @@ public static class ConfigurationMgr
 
     private static string s_ConfigurationPath = null;
 
-    private static string configurationPath => s_ConfigurationPath ??= Path.Join(configurationFolder, "configuration.json");
+    public static string configurationPath => s_ConfigurationPath ??= Path.Join(configurationFolder, "configuration.json");
 
     private static string configurationFolder
     {

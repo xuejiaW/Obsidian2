@@ -9,6 +9,9 @@ public static class ConfigCommand
     {
         var configCommand = new Command("config", "Manage configuration settings");
 
+        var configPath = ConfigurationMgr.configurationPath;
+        configCommand.Description = $"Manage configuration settings\n\nConfiguration file location:\n{configPath}";
+
         var listOption = new Option<bool>("--list", "List configuration settings");
         var allOption = new Option<bool>("--a", "Show all command configurations (use with --list)");
 
