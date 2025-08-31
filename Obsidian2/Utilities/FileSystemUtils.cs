@@ -24,8 +24,21 @@ public static class FileSystemUtils
         }
         catch
         {
-            var fileInfo = new FileInfo(filePath);
-            return $"{fileInfo.Length}_{fileInfo.LastWriteTimeUtc.Ticks}";
+            try
+            {
+                var fileInfo = new FileInfo(filePath);
+                if (fileInfo.Exists)
+                {
+                    return $"{fileInfo.Length}_{fileInfo.LastWriteTimeUtc.Ticks}";
+                }
+            }
+            catch
+            {
+                // Ignore errors in fallback calculation
+            }
+
+            // Return a hash based on file path if file doesn't exist
+            return $"fallback_{filePath.GetHashCode():X}_{DateTime.UtcNow.Ticks}";
         }
     }
 

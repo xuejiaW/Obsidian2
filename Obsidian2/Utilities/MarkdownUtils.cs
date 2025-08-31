@@ -2,13 +2,12 @@ using System.Text.RegularExpressions;
 
 namespace Obsidian2.Utilities;
 
-/// <summary>
-/// Markdown 处理工具类
-/// </summary>
 public static class MarkdownUtils
 {
     public static string ConvertHtmlImgToMarkdown(string content)
     {
+        if (string.IsNullOrEmpty(content)) return string.Empty;
+
         string htmlPattern = @"<img\s+(?:src=""(.*?)"")?(?:\s+alt=""(.*?)"")?[^>]*>";
         content = Regex.Replace(content, htmlPattern, match =>
         {

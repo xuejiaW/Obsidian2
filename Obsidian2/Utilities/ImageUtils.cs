@@ -2,9 +2,6 @@ using System.Diagnostics;
 
 namespace Obsidian2.Utilities;
 
-/// <summary>
-/// 图像处理工具类
-/// </summary>
 public static class ImageUtils
 {
     public static bool ConvertSVGToPNG(string svgPath, string pngPath, string targetFolder)
@@ -36,6 +33,8 @@ public static class ImageUtils
 
     public static bool IsImageFile(string filePath)
     {
+        if (string.IsNullOrWhiteSpace(filePath)) return false;
+
         string[] imageExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp" };
         string extension = Path.GetExtension(filePath).ToLowerInvariant();
         return imageExtensions.Contains(extension);
