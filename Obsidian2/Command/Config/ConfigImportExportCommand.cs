@@ -65,7 +65,7 @@ public static class ConfigImportExportCommand
     {
         var importCommand = new Command("import", "Import configuration from a JSON file");
         var filenameArg = new Argument<string>("filename", "JSON configuration file to import");
-        var backupOption = new Option<bool>("--backup", () => true, "Create backup of current configuration before importing");
+        var backupOption = new Option<bool>("--backup", () => false, "Create backup of current configuration before importing");
         var forceOption = new Option<bool>("--force", () => false, "Force import without confirmation prompt");
         
         importCommand.AddArgument(filenameArg);
@@ -100,6 +100,7 @@ public static class ConfigImportExportCommand
                 if (createBackup)
                 {
                     var backupFilename = $"obsidian2-config-backup-{DateTime.Now:yyyyMMdd-HHmmss}.json";
+                    var backupPath = Path.GetFullPath(backupFilename);
                     var options = new JsonSerializerOptions
                     {
                         WriteIndented = true,
@@ -107,8 +108,8 @@ public static class ConfigImportExportCommand
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                     };
                     var backupJson = JsonSerializer.Serialize(ConfigurationMgr.configuration, options);
-                    File.WriteAllText(backupFilename, backupJson);
-                    Console.WriteLine($"Current configuration backed up to: {backupFilename}");
+                    File.WriteAllText(backupPath, backupJson);
+                    Console.WriteLine($"Current configuration backed up to: {backupPath}");
                 }
 
                 var configJson = File.ReadAllText(filename);
