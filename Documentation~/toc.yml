@@ -1,4 +1,6 @@
-- name: Docs
-  href: Manual/
+- name: 用户手册
+  href: UserGuide_CN/
+- name: 开发手册
+  href: DeveloperGuide_CN/
 - name: API
   href: api/
