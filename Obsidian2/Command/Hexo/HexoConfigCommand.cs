@@ -21,10 +21,10 @@ public static class HexoConfigCommand
     {
         if (!listAll) return;
         
-        var config = ConfigurationMgr.configuration;
+        var config = ConfigurationMgr.GetCommandConfig<HexoConfig>();
         
         Console.WriteLine("Hexo Configuration:");
         Console.WriteLine("==================");
-        Console.WriteLine($"Posts Directory: {config.hexoPostsPath ?? "Not set"}");
+        Console.WriteLine($"Posts Directory: {config.postsPath ?? "Not set"}");
     }
 }

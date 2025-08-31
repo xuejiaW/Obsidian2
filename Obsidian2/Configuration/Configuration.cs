@@ -1,20 +1,41 @@
-﻿namespace Obsidian2;
+﻿using System.Text.Json.Serialization;
+
+namespace Obsidian2;
 
 public class Configuration
 {
     public string obsidianVaultPath { get; set; }
-    public string hexoPostsPath { get; set; }
     public HashSet<string> ignoresPaths { get; set; } = new();
     
-    // GitHub相关配置
-    public GitHubConfig GitHub { get; set; } = new GitHubConfig();
-}
+    [JsonIgnore]
+    public Dictionary<string, ICommandConfig> commandConfigs { get; } = new();
 
-public class GitHubConfig
-{
-    public string PersonalAccessToken { get; set; }
-    public string RepoOwner { get; set; }
-    public string RepoName { get; set; }
-    public string BranchName { get; set; } = "master";
-    public string ImageBasePath { get; set; } = "images";
+    public void AddCommandConfig<T>(T config) where T : class, ICommandConfig
+    {
+        commandConfigs[config.CommandName] = config;
+    }
+
+    public T GetCommandConfig<T>() where T : class, ICommandConfig, new()
+    {
+        var commandName = new T().CommandName;
+        if (commandConfigs.TryGetValue(commandName, out var config))
+        {
+            return (T)config;
+        }
+
+        var newConfig = new T();
+        newConfig.SetDefaults();
+        commandConfigs[commandName] = newConfig;
+        return newConfig;
+    }
+
+    public bool RemoveCommandConfig(string commandName)
+    {
+        return commandConfigs.Remove(commandName);
+    }
+
+    public IEnumerable<string> GetRegisteredCommands()
+    {
+        return commandConfigs.Keys;
+    }
 }

@@ -1,16 +1,24 @@
 {
     "obsidianVaultPath": "C:\\Users\\wxjwa\\Dropbox\\PersonalNotes",
-    "hexoPostsPath": "D:\\Github\\xuejiaW.github.io\\source\\_posts",
     "ignoresPaths": [
         ".git",
         ".obsidian",
         ".trash"
     ],
-    "GitHub": {
-        "PersonalAccessToken": "",
-        "RepoOwner": "xuejiaW",
-        "RepoName": "Obsidian2ImageRepo",
-        "BranchName": "main",
-        "ImageBasePath": "images"
+    "commandConfigs": {
+        "compat": {
+            "$type": "CompatConfig",
+            "AssetsRepo": {
+                "PersonalAccessToken": "",
+                "RepoOwner": "xuejiaW",
+                "RepoName": "Obsidian2ImageRepo",
+                "BranchName": "main",
+                "ImageBasePath": "images"
+            }
+        },
+        "hexo": {
+            "$type": "HexoConfig",
+            "postsPath": "D:\\Github\\xuejiaW.github.io\\source\\_posts"
+        }
     }
 }

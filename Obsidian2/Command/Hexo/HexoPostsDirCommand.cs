@@ -16,8 +16,9 @@ public static class HexoPostsDirCommand
         {
             Utils.CheckDirectory(hexoPostsDir, "Hexo posts directory");
 
-            ConfigurationMgr.configuration.hexoPostsPath = hexoPostsDir.FullName;
-            ConfigurationMgr.Save();
+            var config = ConfigurationMgr.GetCommandConfig<HexoConfig>();
+            config.postsPath = hexoPostsDir.FullName;
+            ConfigurationMgr.SaveCommandConfig(config);
             Console.WriteLine("Hexo posts directory has been set.");
         }
     }

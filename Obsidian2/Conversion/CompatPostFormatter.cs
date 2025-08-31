@@ -26,33 +26,35 @@ internal class CompatPostFormatter
         if (!Directory.Exists(m_AssetsFolderPath)) Directory.CreateDirectory(m_AssetsFolderPath);
 
         InitGitHubUploader();
-        GitHubConfig config = ConfigurationMgr.configuration.GitHub;
+        var compatConfig = ConfigurationMgr.GetCommandConfig<CompatConfig>();
+        var repoConfig = compatConfig.AssetsRepo;
         m_GithubRepoPrefix
-            = $"https://raw.githubusercontent.com/{config.RepoOwner}/{config.RepoName}/{config.BranchName}/{config.ImageBasePath}/";
+            = $"https://raw.githubusercontent.com/{repoConfig.repoOwner}/{repoConfig.repoName}/{repoConfig.branchName}/{repoConfig.imageFolderPath}/";
     }
 
     private void InitGitHubUploader()
     {
-        GitHubConfig config = ConfigurationMgr.configuration.GitHub;
+        var config = ConfigurationMgr.GetCommandConfig<CompatConfig>();
+        var repoConfig = config.AssetsRepo;
 
-        if (string.IsNullOrWhiteSpace(config.PersonalAccessToken) ||
-            string.IsNullOrWhiteSpace(config.RepoOwner) ||
-            string.IsNullOrWhiteSpace(config.RepoName))
+        if (string.IsNullOrWhiteSpace(repoConfig.personalAccessToken) ||
+            string.IsNullOrWhiteSpace(repoConfig.repoOwner) ||
+            string.IsNullOrWhiteSpace(repoConfig.repoName))
         {
-            Console.WriteLine("Warning: GitHub configuration is incomplete, cannot upload images to GitHub. Please check your configuration file.");
+            Console.WriteLine("Warning: Assets repository configuration is incomplete, image upload disabled.");
             return;
         }
 
         try
         {
-            m_GitHubUploader = new GitHubImageUploader(config.PersonalAccessToken,
-                                                       config.RepoOwner,
-                                                       config.RepoName,
-                                                       config.BranchName,
-                                                       config.ImageBasePath
+            m_GitHubUploader = new GitHubImageUploader(repoConfig.personalAccessToken,
+                                                       repoConfig.repoOwner,
+                                                       repoConfig.repoName,
+                                                       repoConfig.branchName,
+                                                       repoConfig.imageFolderPath
                                                       );
 
-            Console.WriteLine($"GitHub uploader initialized, will upload images to {config.RepoOwner}/{config.RepoName} repository");
+            Console.WriteLine($"GitHub uploader initialized, will upload images to {repoConfig.repoOwner}/{repoConfig.repoName} repository");
         }
         catch (Exception ex)
         {
@@ -64,13 +66,11 @@ internal class CompatPostFormatter
     {
         string content = await File.ReadAllTextAsync(m_InputFile.FullName);
 
-        // 处理所有图片链接和格式化
         content = await ProcessImageLinks(content);
         content = MarkdownConverter.FormatMarkdownTables(content);
         content = AdmonitionsFormatter.FormatMkDocsCalloutToQuote(content);
         content = MarkdownConverter.ConvertHtmlImgToMarkdown(content);
 
-        // 写入文件并清理
         await File.WriteAllTextAsync(m_OutputFilePath, content);
         CleanupUnusedImages();
 
@@ -113,14 +113,12 @@ internal class CompatPostFormatter
     {
         try
         {
-            // Decode and get the full path of the image.
             string decodedImagePath = Uri.UnescapeDataString(imagePath);
             string fullImagePath = Path.IsPathRooted(decodedImagePath)
                 ? decodedImagePath
                 : Path.GetFullPath(Path.Combine(Path.GetDirectoryName(m_InputFile.FullName) ?? string.Empty,
                                                 decodedImagePath));
 
-            // Generate a unique image name and process the image.
             string destImagePath = GetUniqueImagePath(fullImagePath);
             bool isSvg = Path.GetExtension(fullImagePath).Equals(".svg", StringComparison.OrdinalIgnoreCase);
 

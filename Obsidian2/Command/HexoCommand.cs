@@ -5,25 +5,37 @@ namespace Obsidian2;
 
 internal static class HexoCommand
 {
+    static HexoCommand()
+    {
+        ConfigurationMgr.RegisterCommandConfig<HexoConfig>();
+    }
+
     internal static Command CreateCommand()
     {
-        Configuration configuration = ConfigurationMgr.configuration;
-
         var hexoCommand = new Command("hexo", "Converts obsidian notes to hexo posts");
         var obsidianOption = new Option<DirectoryInfo>(name: "--obsidian-vault-dir",
                                                        description: "Path to the Obsidian vault directory",
                                                        getDefaultValue: () =>
-                                                           new DirectoryInfo(configuration.obsidianVaultPath));
+                                                           new DirectoryInfo(ConfigurationMgr.configuration.obsidianVaultPath ?? ""));
 
         var hexoOption = new Option<DirectoryInfo>(name: "--hexo-posts-dir",
                                                    description: "Path to the Hexo posts directory",
                                                    getDefaultValue: () =>
-                                                       new DirectoryInfo(configuration.hexoPostsPath));
+                                                   {
+                                                       try
+                                                       {
+                                                           var hexoConfig = ConfigurationMgr.GetCommandConfig<HexoConfig>();
+                                                           return new DirectoryInfo(hexoConfig.postsPath ?? ".");
+                                                       }
+                                                       catch
+                                                       {
+                                                           return new DirectoryInfo(".");
+                                                       }
+                                                   });
 
         hexoCommand.AddOption(obsidianOption);
         hexoCommand.AddOption(hexoOption);
         
-        // Add config subcommand
         hexoCommand.AddCommand(HexoConfigCommand.CreateCommand());
         
         hexoCommand.SetHandler(ConvertObsidian2Hexo, obsidianOption, hexoOption);

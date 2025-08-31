@@ -5,6 +5,11 @@ namespace Obsidian2;
 
 internal static class CompatCommand
 {
+    static CompatCommand()
+    {
+        ConfigurationMgr.RegisterCommandConfig<CompatConfig>();
+    }
+
     internal static Command CreateCommand()
     {
         var compatCommand

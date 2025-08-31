@@ -22,15 +22,15 @@ public static class CompatConfigCommand
     {
         if (!listAll) return;
         
-        var config = ConfigurationMgr.configuration;
+        var config = ConfigurationMgr.GetCommandConfig<CompatConfig>();
         
         Console.WriteLine("Compat Configuration:");
         Console.WriteLine("====================");
         Console.WriteLine("Assets Repository:");
-        Console.WriteLine($"  Owner: {config.GitHub.RepoOwner ?? "Not set"}");
-        Console.WriteLine($"  Name: {config.GitHub.RepoName ?? "Not set"}");
-        Console.WriteLine($"  Branch: {config.GitHub.BranchName}");
-        Console.WriteLine($"  Image Path: {config.GitHub.ImageBasePath}");
-        Console.WriteLine($"  Access Token: {(string.IsNullOrEmpty(config.GitHub.PersonalAccessToken) ? "Not set" : "***")}");
+        Console.WriteLine($"  Owner: {config.AssetsRepo.repoOwner ?? "Not set"}");
+        Console.WriteLine($"  Name: {config.AssetsRepo.repoName ?? "Not set"}");
+        Console.WriteLine($"  Branch: {config.AssetsRepo.branchName}");
+        Console.WriteLine($"  Image Path: {config.AssetsRepo.imageFolderPath}");
+        Console.WriteLine($"  Access Token: {(string.IsNullOrEmpty(config.AssetsRepo.personalAccessToken) ? "Not set" : "***")}");
     }
 }

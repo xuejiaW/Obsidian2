@@ -25,8 +25,9 @@ public static class CompatConfigAssetsRepoCommand
 
         void SetToken(string token)
         {
-            ConfigurationMgr.configuration.GitHub.PersonalAccessToken = token;
-            ConfigurationMgr.Save();
+            var config = ConfigurationMgr.GetCommandConfig<CompatConfig>();
+            config.AssetsRepo.personalAccessToken = token;
+            ConfigurationMgr.SaveCommandConfig(config);
             Console.WriteLine("Assets repository access token has been set.");
         }
     }
@@ -41,8 +42,9 @@ public static class CompatConfigAssetsRepoCommand
 
         void SetOwner(string owner)
         {
-            ConfigurationMgr.configuration.GitHub.RepoOwner = owner;
-            ConfigurationMgr.Save();
+            var config = ConfigurationMgr.GetCommandConfig<CompatConfig>();
+            config.AssetsRepo.repoOwner = owner;
+            ConfigurationMgr.SaveCommandConfig(config);
             Console.WriteLine("Assets repository owner has been set.");
         }
     }
@@ -57,8 +59,9 @@ public static class CompatConfigAssetsRepoCommand
 
         void SetName(string name)
         {
-            ConfigurationMgr.configuration.GitHub.RepoName = name;
-            ConfigurationMgr.Save();
+            var config = ConfigurationMgr.GetCommandConfig<CompatConfig>();
+            config.AssetsRepo.repoName = name;
+            ConfigurationMgr.SaveCommandConfig(config);
             Console.WriteLine("Assets repository name has been set.");
         }
     }
@@ -73,8 +76,9 @@ public static class CompatConfigAssetsRepoCommand
 
         void SetBranch(string branch)
         {
-            ConfigurationMgr.configuration.GitHub.BranchName = branch;
-            ConfigurationMgr.Save();
+            var config = ConfigurationMgr.GetCommandConfig<CompatConfig>();
+            config.AssetsRepo.branchName = branch;
+            ConfigurationMgr.SaveCommandConfig(config);
             Console.WriteLine("Assets repository branch has been set.");
         }
     }
@@ -89,8 +93,9 @@ public static class CompatConfigAssetsRepoCommand
 
         void SetImagePath(string path)
         {
-            ConfigurationMgr.configuration.GitHub.ImageBasePath = path;
-            ConfigurationMgr.Save();
+            var config = ConfigurationMgr.GetCommandConfig<CompatConfig>();
+            config.AssetsRepo.imageFolderPath = path;
+            ConfigurationMgr.SaveCommandConfig(config);
             Console.WriteLine("Assets repository image path has been set.");
         }
     }
