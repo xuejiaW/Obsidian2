@@ -6,7 +6,7 @@ public class Configuration
 {
     public string obsidianVaultPath { get; set; }
     public HashSet<string> ignoresPaths { get; set; } = new();
-    
+
     [JsonIgnore]
     public Dictionary<string, ICommandConfig> commandConfigs { get; } = new();
 
