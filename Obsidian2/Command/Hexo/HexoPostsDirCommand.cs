@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Obsidian2.Utilities;
 
 namespace Obsidian2;
 
@@ -14,7 +15,7 @@ public static class HexoPostsDirCommand
 
         void SetPostsDir(DirectoryInfo hexoPostsDir)
         {
-            Utils.CheckDirectory(hexoPostsDir, "Hexo posts directory");
+            FileSystemUtils.CheckDirectory(hexoPostsDir, "Hexo posts directory");
 
             var config = ConfigurationMgr.GetCommandConfig<HexoConfig>();
             config.postsPath = hexoPostsDir.FullName;

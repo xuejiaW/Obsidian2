@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Obsidian2.Utilities;
 
 namespace Obsidian2;
 
@@ -14,7 +15,7 @@ public static class ConfigPathCommand
 
         void SetObsidianVaultDir(DirectoryInfo obsidianVaultDir)
         {
-            Utils.CheckDirectory(obsidianVaultDir, "Obsidian vault directory");
+            FileSystemUtils.CheckDirectory(obsidianVaultDir, "Obsidian vault directory");
             ConfigurationMgr.configuration.obsidianVaultPath = obsidianVaultDir.FullName;
             ConfigurationMgr.Save();
             Console.WriteLine("Obsidian vault directory has been set.");

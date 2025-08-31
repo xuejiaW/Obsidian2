@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using Obsidian2.ConsoleUI;
+using Obsidian2.Utilities;
 
 namespace Obsidian2;
 
@@ -44,8 +45,8 @@ internal static class HexoCommand
         Console.WriteLine($"Obsidian vault path is {obsidianVaultDir.FullName}");
         Console.WriteLine($"Hexo posts path is {hexoPostsDir.FullName}");
 
-        Utils.CheckDirectory(obsidianVaultDir, "Obsidian vault directory");
-        Utils.CheckDirectory(hexoPostsDir, "Hexo posts directory");
+        FileSystemUtils.CheckDirectory(obsidianVaultDir, "Obsidian vault directory");
+        FileSystemUtils.CheckDirectory(hexoPostsDir, "Hexo posts directory");
 
         StopWatch.CreateStopWatch("Whole Operation", () =>
         {

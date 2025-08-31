@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using System.Net.Http.Json;
+using System.Linq;
 using Obsidian2.Utilities;
 
 namespace Obsidian2;
@@ -151,10 +152,10 @@ public class GitHubImageUploader
             if (!File.Exists(localImagePath)) throw new FileNotFoundException($"Image not found: {localImagePath}");
 
             string imageFileName = Path.GetFileName(localImagePath);
-            string sanitizedFolderName = PathUtils.SanitizeFolderName(remoteFolderName);
+            string sanitizedFolderName = SanitizeFolderName(remoteFolderName);
             string remotePath = Path.Combine(m_ImageBasePath, sanitizedFolderName, imageFileName).Replace('\\', '/');
 
-            string fileHash = FileUtils.ComputeFileHash(localImagePath);            // Check if record exists in local cache and hash matches
+            string fileHash = FileSystemUtils.ComputeFileHash(localImagePath);            // Check if record exists in local cache and hash matches
             if (m_FileHashCache.TryGetValue(remotePath, out string cachedHash) && cachedHash == fileHash)
             {
                 Log(LogLevel.Info, $"Image {imageFileName} already exists on GitHub with identical content, skipping upload");
@@ -330,6 +331,31 @@ public class GitHubImageUploader
     private string GetRawUrl(string path)
     {
         return $"https://raw.githubusercontent.com/{m_Owner}/{m_Repo}/{m_Branch}/{path}";
+    }
+
+    /// <summary>
+    /// 清理文件夹名称，移除非法字符并替换空格
+    /// </summary>
+    /// <param name="folderName">原始文件夹名称</param>
+    /// <returns>清理后的文件夹名称</returns>
+    private static string SanitizeFolderName(string folderName)
+    {
+        if (string.IsNullOrEmpty(folderName)) return string.Empty;
+
+        // 移除非法字符
+        char[] invalidChars = Path.GetInvalidFileNameChars();
+        string sanitized = new(folderName.Where(c => !invalidChars.Contains(c)).ToArray());
+
+        // 将空格和特殊字符替换为下划线
+        sanitized = Regex.Replace(sanitized, @"[\s\-\.\[\]\(\)]", "_");
+
+        // 移除多余的下划线
+        sanitized = Regex.Replace(sanitized, @"_{2,}", "_");
+
+        // 移除开头和结尾的下划线
+        sanitized = sanitized.Trim('_');
+
+        return sanitized.Length > 100 ? sanitized[..100] : sanitized;
     }
 }
 

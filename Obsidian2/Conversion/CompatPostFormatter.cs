@@ -67,9 +67,9 @@ internal class CompatPostFormatter
         string content = await File.ReadAllTextAsync(m_InputFile.FullName);
 
         content = await ProcessImageLinks(content);
-        content = MarkdownConverter.FormatMarkdownTables(content);
+        content = MarkdownUtils.FormatMarkdownTables(content);
         content = AdmonitionsFormatter.FormatMkDocsCalloutToQuote(content);
-        content = MarkdownConverter.ConvertHtmlImgToMarkdown(content);
+        content = MarkdownUtils.ConvertHtmlImgToMarkdown(content);
 
         await File.WriteAllTextAsync(m_OutputFilePath, content);
         CleanupUnusedImages();
@@ -127,7 +127,7 @@ internal class CompatPostFormatter
                 string pngFileName = Path.GetFileNameWithoutExtension(Path.GetFileName(destImagePath)) + ".png";
                 string pngFilePath = Path.Combine(m_AssetsFolderPath, pngFileName);
 
-                if (SvgConverter.ConvertSvgToPng(fullImagePath, pngFilePath, m_AssetsFolderPath))
+                if (ImageUtils.ConvertSVGToPNG(fullImagePath, pngFilePath, m_AssetsFolderPath))
                 {
                     destImagePath = pngFilePath;
                 }
