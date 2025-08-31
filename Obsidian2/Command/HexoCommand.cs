@@ -13,31 +13,27 @@ internal static class HexoCommand
     internal static Command CreateCommand()
     {
         var hexoCommand = new Command("hexo", "Converts obsidian notes to hexo posts");
-        var obsidianOption = new Option<DirectoryInfo>(name: "--obsidian-vault-dir",
-                                                       description: "Path to the Obsidian vault directory",
-                                                       getDefaultValue: () =>
-                                                           new DirectoryInfo(ConfigurationMgr.configuration.obsidianVaultPath ?? ""));
+        var obsidianOption = new Option<DirectoryInfo>(name: "--obsidian-vault-dir", description: "Path to the Obsidian vault directory",
+                                                       getDefaultValue: () => new DirectoryInfo(ConfigurationMgr.configuration.obsidianVaultPath ?? ""));
 
-        var hexoOption = new Option<DirectoryInfo>(name: "--hexo-posts-dir",
-                                                   description: "Path to the Hexo posts directory",
-                                                   getDefaultValue: () =>
-                                                   {
-                                                       try
-                                                       {
-                                                           var hexoConfig = ConfigurationMgr.GetCommandConfig<HexoConfig>();
-                                                           return new DirectoryInfo(hexoConfig.postsPath ?? ".");
-                                                       }
-                                                       catch
-                                                       {
-                                                           return new DirectoryInfo(".");
-                                                       }
-                                                   });
+        var hexoOption = new Option<DirectoryInfo>(name: "--hexo-posts-dir", description: "Path to the Hexo posts directory", getDefaultValue: () =>
+        {
+            try
+            {
+                var hexoConfig = ConfigurationMgr.GetCommandConfig<HexoConfig>();
+                return new DirectoryInfo(hexoConfig.postsPath ?? ".");
+            }
+            catch
+            {
+                return new DirectoryInfo(".");
+            }
+        });
 
         hexoCommand.AddOption(obsidianOption);
         hexoCommand.AddOption(hexoOption);
-        
+
         hexoCommand.AddCommand(HexoConfigCommand.CreateCommand());
-        
+
         hexoCommand.SetHandler(ConvertObsidian2Hexo, obsidianOption, hexoOption);
         return hexoCommand;
     }

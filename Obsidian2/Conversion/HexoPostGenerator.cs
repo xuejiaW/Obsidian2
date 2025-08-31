@@ -6,7 +6,6 @@ internal class HexoPostGenerator
 
     public HexoPostGenerator(DirectoryInfo postDir) { m_PostsDir = postDir; }
 
-
     public async Task<string> CreateHexoPostBundle(string notePath)
     {
         string noteName = Path.GetFileNameWithoutExtension(notePath);
