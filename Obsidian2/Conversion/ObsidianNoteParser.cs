@@ -1,5 +1,4 @@
-﻿using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
+﻿using Obsidian2.Utilities;
 
 namespace Obsidian2;
 
@@ -9,18 +8,34 @@ internal static class ObsidianNoteParser
     {
         if (!File.Exists(notePath)) return false;
 
-        var result = GetYAMLMetaData(notePath);
+        var result = YAMLUtils.GetYAMLMetadata(notePath);
+        if (result == null || !result.TryGetValue("publishStatus", out object statusValue)) 
+            return false;
 
-        if (result == null || !result.TryGetValue("published", out object value)) return false;
+        string status = statusValue.ToString().ToLowerInvariant();
+        return status == "ready" || status == "published";
+    }
 
-        return string.Equals(value.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+    public static bool IsReadyToPublish(string notePath)
+    {
+        if (!File.Exists(notePath)) return false;
+
+        var result = YAMLUtils.GetYAMLMetadata(notePath);
+        if (result == null) return false;
+
+        if (result.TryGetValue("publishStatus", out object statusValue))
+        {
+            return statusValue.ToString().ToLowerInvariant() == "ready";
+        }
+
+        return false;
     }
 
     public static string GetTitle(string notePath)
     {
         if (!File.Exists(notePath)) return Path.GetFileName(notePath);
 
-        var result = GetYAMLMetaData(notePath);
+        var result = YAMLUtils.GetYAMLMetadata(notePath);
 
         if (result == null || !result.TryGetValue("title", out object value))
             return Path.GetFileNameWithoutExtension(notePath);
@@ -38,20 +53,5 @@ internal static class ObsidianNoteParser
     public static string GetNotePathBasedOnFolder(string noteFolderPath, string notePath)
     {
         return $"{noteFolderPath}{notePath}".Replace("%20", " ");
-    }
-
-    private static Dictionary<string, object> GetYAMLMetaData(string notePath)
-    {
-        string mdFileContent = File.ReadAllText(notePath);
-        if (mdFileContent.Length < 3) return null;
-        int yamlEnd = mdFileContent.IndexOf("---", 1, StringComparison.Ordinal);
-        if (yamlEnd == -1) return null;
-
-        var result = new DeserializerBuilder()
-                    .WithNamingConvention(UnderscoredNamingConvention.Instance)
-                    .Build()
-                    .Deserialize<Dictionary<string, object>>(mdFileContent[..yamlEnd]);
-
-        return result;
     }
 }

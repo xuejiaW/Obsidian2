@@ -1,4 +1,5 @@
 ﻿using Obsidian2.ConsoleUI;
+using Obsidian2.Utilities;
 using Progress = Obsidian2.ConsoleUI.Progress;
 
 namespace Obsidian2;
@@ -37,6 +38,8 @@ internal class Obsidian2HexoHandler
         List<string> files = Directory.GetFiles(obsidianTempDir.FullName, "*.md", SearchOption.AllDirectories)
                                       .Where(file => file.EndsWith(".md")).ToList();
 
+        var readyToPublishFiles = new List<string>();
+
         await Progress.CreateProgress("Converting Obsidian Notes to Hexo Posts", async progressTask =>
         {
             progressTask.MaxValue = files.Count;
@@ -48,6 +51,16 @@ internal class Obsidian2HexoHandler
                     var generator = new HexoPostGenerator(hexoPostsDir);
                     if (!ObsidianNoteParser.IsRequiredToBePublished(notePath))
                         return null;
+
+                    // Track files that are ready to publish for status update
+                    if (ObsidianNoteParser.IsReadyToPublish(notePath))
+                    {
+                        string originalPath = GetOriginalFilePath(notePath);
+                        lock (readyToPublishFiles)
+                        {
+                            readyToPublishFiles.Add(originalPath);
+                        }
+                    }
 
                     string postPath = await generator.CreateHexoPostBundle(notePath);
                     return new HexoPostFormatter(notePath, postPath);
@@ -85,6 +98,9 @@ internal class Obsidian2HexoHandler
             await Task.WhenAll(tasks);
         });
 
+        // Update status for successfully processed ready files
+        UpdateReadyFilesToPublished(readyToPublishFiles);
+
         async Task CopyAssetIfExist(string notePath)
         {
             string noteName = Path.GetFileNameWithoutExtension(notePath);
@@ -95,6 +111,27 @@ internal class Obsidian2HexoHandler
             string postAssetsDir = HexoPostStyleAdapter.AdaptPostPath(hexoPostsDir + "\\" + noteName);
             if (Directory.Exists(postAssetsDir)) Directory.Delete(postAssetsDir, true);
             await new DirectoryInfo(noteAssetsDir).DeepCopy(postAssetsDir);
+        }
+    }
+
+    private string GetOriginalFilePath(string tempFilePath)
+    {
+        string relativePath = Path.GetRelativePath(obsidianTempDir.FullName, tempFilePath);
+        return Path.Combine(obsidianVaultDir.FullName, relativePath);
+    }
+
+    private void UpdateReadyFilesToPublished(List<string> filePaths)
+    {
+        foreach (string filePath in filePaths)
+        {
+            try
+            {
+                YAMLUtils.UpdateYamlMetadata(filePath, "publishStatus", "published");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Failed to update status for {filePath}: {ex.Message}");
+            }
         }
     }
 }
