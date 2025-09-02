@@ -114,5 +114,8 @@
   "Obsidian2.Utilities.MarkdownUtils": "Obsidian2.Utilities.MarkdownUtils.yml",
   "Obsidian2.Utilities.MarkdownUtils.ConvertHtmlImgToMarkdown(System.String)": "Obsidian2.Utilities.MarkdownUtils.yml",
   "Obsidian2.Utilities.MarkdownUtils.FixMarkdownImageLinks(System.String)": "Obsidian2.Utilities.MarkdownUtils.yml",
-  "Obsidian2.Utilities.MarkdownUtils.FormatMarkdownTables(System.String)": "Obsidian2.Utilities.MarkdownUtils.yml"
+  "Obsidian2.Utilities.MarkdownUtils.FormatMarkdownTables(System.String)": "Obsidian2.Utilities.MarkdownUtils.yml",
+  "Obsidian2.Utilities.YAMLUtils": "Obsidian2.Utilities.YAMLUtils.yml",
+  "Obsidian2.Utilities.YAMLUtils.GetYAMLMetadata(System.String)": "Obsidian2.Utilities.YAMLUtils.yml",
+  "Obsidian2.Utilities.YAMLUtils.UpdateYamlMetadata(System.String,System.String,System.String)": "Obsidian2.Utilities.YAMLUtils.yml"
 }
