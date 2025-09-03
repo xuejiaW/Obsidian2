@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using Obsidian2.Utilities.Obsidian;
 
 namespace Obsidian2;
 
@@ -44,11 +45,11 @@ internal class HexoPostFormatter
             header = header.Replace("%20", " ");
 
             string targetNotePath
-                = ObsidianNoteParser.GetNotePathBasedOnFolder(Obsidian2HexoHandler.obsidianTempDir.FullName,
+                = ObsidianNoteUtils.GetNotePathBasedOnFolder(Obsidian2HexoHandler.obsidianTempDir.FullName,
                                                               linkRelativePath);
 
             if (!File.Exists(targetNotePath))
-                targetNotePath = ObsidianNoteParser.GetAbsoluteLinkPath(srcNotePath, linkRelativePath);
+                targetNotePath = ObsidianNoteUtils.GetAbsoluteLinkPath(srcNotePath, linkRelativePath);
 
             if (File.Exists(targetNotePath))
             {
@@ -71,8 +72,8 @@ internal class HexoPostFormatter
 
             string GetReferenceLink()
             {
-                string title = ObsidianNoteParser.GetTitle(targetNotePath);
-                if (!ObsidianNoteParser.IsRequiredToBePublished(targetNotePath)) return title;
+                string title = ObsidianNoteUtils.GetTitle(targetNotePath);
+                if (!ObsidianNoteUtils.IsRequiredToBePublished(targetNotePath)) return title;
 
                 string referencedPostPath = Adapter.AdaptPostPath(Adapter.ConvertMdLink2Relative(targetNotePath));
                 return $"[{title}]({referencedPostPath})";
@@ -94,11 +95,11 @@ internal class HexoPostFormatter
             string blockId = match.Groups[3].Value;
 
             string targetNotePath
-                = ObsidianNoteParser.GetNotePathBasedOnFolder(Obsidian2HexoHandler.obsidianTempDir.FullName,
+                = ObsidianNoteUtils.GetNotePathBasedOnFolder(Obsidian2HexoHandler.obsidianTempDir.FullName,
                                                               linkRelativePath);
 
             if (!File.Exists(targetNotePath))
-                targetNotePath = ObsidianNoteParser.GetAbsoluteLinkPath(srcNotePath, linkRelativePath);
+                targetNotePath = ObsidianNoteUtils.GetAbsoluteLinkPath(srcNotePath, linkRelativePath);
 
             if (File.Exists(targetNotePath))
             {
@@ -119,8 +120,8 @@ internal class HexoPostFormatter
 
             string GetReferenceLink()
             {
-                string title = ObsidianNoteParser.GetTitle(targetNotePath);
-                if (!ObsidianNoteParser.IsRequiredToBePublished(targetNotePath)) return title;
+                string title = ObsidianNoteUtils.GetTitle(targetNotePath);
+                if (!ObsidianNoteUtils.IsRequiredToBePublished(targetNotePath)) return title;
 
                 string referencedPostPath = Adapter.AdaptPostPath(Adapter.ConvertMdLink2Relative(targetNotePath));
                 return $"[{title}]({referencedPostPath})";

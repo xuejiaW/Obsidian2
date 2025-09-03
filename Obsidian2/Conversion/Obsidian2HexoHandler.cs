@@ -1,5 +1,6 @@
 ﻿using Obsidian2.ConsoleUI;
 using Obsidian2.Utilities;
+using Obsidian2.Utilities.Obsidian;
 using Progress = Obsidian2.ConsoleUI.Progress;
 
 namespace Obsidian2;
@@ -49,11 +50,11 @@ internal class Obsidian2HexoHandler
                 try
                 {
                     var generator = new HexoPostGenerator(hexoPostsDir);
-                    if (!ObsidianNoteParser.IsRequiredToBePublished(notePath))
+                    if (!ObsidianNoteUtils.IsRequiredToBePublished(notePath))
                         return null;
 
                     // Track files that are ready to publish for status update
-                    if (ObsidianNoteParser.IsReadyToPublish(notePath))
+                    if (ObsidianNoteUtils.IsReadyToPublish(notePath))
                     {
                         string originalPath = GetOriginalFilePath(notePath);
                         lock (readyToPublishFiles)

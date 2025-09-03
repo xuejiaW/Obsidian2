@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using TinyPinyin;
 using Obsidian2.Utilities;
+using Obsidian2.Utilities.Obsidian;
 
 namespace Obsidian2;
 
@@ -59,8 +60,8 @@ internal static class HexoPostStyleAdapter
                 fragment = "/#" + AdaptTitleFragment(splitLink[1]);
             }
 
-            string absLinkPath = ObsidianNoteParser.GetAbsoluteLinkPath(notePath, linkRelativePath);
-            if (!ObsidianNoteParser.IsRequiredToBePublished(absLinkPath)) return linkText;
+            string absLinkPath = ObsidianNoteUtils.GetAbsoluteLinkPath(notePath, linkRelativePath);
+            if (!ObsidianNoteUtils.IsRequiredToBePublished(absLinkPath)) return linkText;
 
             // As all posts are in the same directory, we can just use the file name as the link path.
             linkRelativePath = ConvertMdLink2Relative(absLinkPath);
