@@ -7,10 +7,25 @@ using Adapter = HexoPostStyleAdapter;
 
 internal class HexoPostFormatter
 {
+    #region Constants
+    private static class RegexPatterns
+    {
+        public const string HeaderLink = @"!\[(.*?)\]\((.*?.md)#(?!\^)(.*?)\)";
+        public const string BlockLink = @"!\[(.*?)\]\((.*?.md)#(\^[a-zA-Z0-9]{6})\)";
+    }
+
+    private const string QuoteIcon = "'fas fa-quote-left'";
+    private const string ReferenceFooter = "———— {0}";
+    #endregion
+
+    #region Fields
     private string m_SrcNotePath = null;
     private string m_DstPostPath = null;
+    #endregion
 
+    #region Properties
     public string postPath => m_DstPostPath;
+    #endregion
 
     public HexoPostFormatter(string srcNotePath, string dstPostPath)
     {
@@ -33,101 +48,69 @@ internal class HexoPostFormatter
 
     private string FormatHeaderLink(string content, string srcNotePath)
     {
-        string pattern = @"!\[(.*?)\]\((.*?.md)#(?!\^)(.*?)\)";
-        return Regex.Replace(content, pattern, ReplaceHeaderLink);
-
-        string ReplaceHeaderLink(Match match)
-        {
-            string _ = match.Groups[1].Value;
-            string linkRelativePath = match.Groups[2].Value;
-            string header = match.Groups[3].Value;
-
-            header = header.Replace("%20", " ");
-
-            string targetNotePath
-                = ObsidianNoteUtils.GetNotePathBasedOnFolder(Obsidian2HexoHandler.obsidianTempDir.FullName,
-                                                              linkRelativePath);
-
-            if (!File.Exists(targetNotePath))
-                targetNotePath = ObsidianNoteUtils.GetAbsoluteLinkPath(srcNotePath, linkRelativePath);
-
-            if (File.Exists(targetNotePath))
-            {
-                List<string> lines = File.ReadLines(targetNotePath).ToList();
-                int startIndex = lines.FindIndex(line => line.StartsWith("#") &&
-                                                         line.EndsWith(header, StringComparison.OrdinalIgnoreCase));
-                int endIndex = lines.FindIndex(startIndex + 1, line => line.StartsWith("#"));
-                List<string> contentLines = lines.GetRange(startIndex, endIndex - startIndex);
-
-                string quoteContent = $"""
-                                       {string.Join("\n", contentLines)}
-                                       ———— {GetReferenceLink()}
-                                       """;
-                return Adapter.AdaptAdmonition(quoteContent, "'fas fa-quote-left'");
-            }
-
-            Console.WriteLine($"Not Found for relative path {linkRelativePath}");
-            Console.WriteLine($"Not Found for absolute path {targetNotePath}");
-            return "";
-
-            string GetReferenceLink()
-            {
-                string title = ObsidianNoteUtils.GetTitle(targetNotePath);
-                if (!ObsidianNoteUtils.IsRequiredToBePublished(targetNotePath)) return title;
-
-                string referencedPostPath = Adapter.AdaptPostPath(Adapter.ConvertMdLink2Relative(targetNotePath));
-                return $"[{title}]({referencedPostPath})";
-            }
-        }
+        return Regex.Replace(content, RegexPatterns.HeaderLink, match => 
+            ProcessObsidianLink(match, srcNotePath, LinkType.Header));
     }
 
     private string FormatBlockLink(string content, string srcNotePath)
     {
-        // Block Link's path is related to the vault path, not the note path.
-
-        string pattern = @"!\[(.*?)\]\((.*?.md)#(\^[a-zA-Z0-9]{6})\)";
-        return Regex.Replace(content, pattern, ReplaceBlockLink);
-
-        string ReplaceBlockLink(Match match)
-        {
-            string _ = match.Groups[1].Value;
-            string linkRelativePath = match.Groups[2].Value;
-            string blockId = match.Groups[3].Value;
-
-            string targetNotePath
-                = ObsidianNoteUtils.GetNotePathBasedOnFolder(Obsidian2HexoHandler.obsidianTempDir.FullName,
-                                                              linkRelativePath);
-
-            if (!File.Exists(targetNotePath))
-                targetNotePath = ObsidianNoteUtils.GetAbsoluteLinkPath(srcNotePath, linkRelativePath);
-
-            if (File.Exists(targetNotePath))
-            {
-                string blockContent = File.ReadAllLines(targetNotePath).ToList()
-                                          .First(line => line.EndsWith(blockId)).Replace(blockId, "");
-
-                string quoteContent = $"""
-                                       {blockContent}
-                                       ———— {GetReferenceLink()}
-                                       """;
-
-                return Adapter.AdaptAdmonition(quoteContent, "'fas fa-quote-left'");
-            }
-
-            Console.WriteLine($"Not Found for relative path {linkRelativePath}");
-            Console.WriteLine($"Not Found for absolute path {targetNotePath}");
-            return "";
-
-            string GetReferenceLink()
-            {
-                string title = ObsidianNoteUtils.GetTitle(targetNotePath);
-                if (!ObsidianNoteUtils.IsRequiredToBePublished(targetNotePath)) return title;
-
-                string referencedPostPath = Adapter.AdaptPostPath(Adapter.ConvertMdLink2Relative(targetNotePath));
-                return $"[{title}]({referencedPostPath})";
-            }
-        }
+        return Regex.Replace(content, RegexPatterns.BlockLink, match => 
+            ProcessObsidianLink(match, srcNotePath, LinkType.Block));
     }
+
+    #region Link Processing Helpers
+    private enum LinkType { Header, Block }
+
+    private string ProcessObsidianLink(Match match, string srcNotePath, LinkType linkType)
+    {
+        // Extract link components directly from regex match
+        string relativePath = match.Groups[2].Value;
+        string fragment = match.Groups[3].Value.Replace("%20", " ");
+        
+        var targetNotePath = ObsidianNoteUtils.ResolveTargetPath(
+            relativePath, srcNotePath, Obsidian2HexoHandler.obsidianTempDir.FullName);
+        
+        if (!File.Exists(targetNotePath))
+        {
+            LogFileNotFound(relativePath, targetNotePath);
+            return string.Empty;
+        }
+
+        var extractedContent = linkType == LinkType.Header 
+            ? ObsidianNoteUtils.ExtractHeaderContent(targetNotePath, fragment)
+            : ObsidianNoteUtils.ExtractBlockContent(targetNotePath, fragment);
+
+        if (string.IsNullOrEmpty(extractedContent))
+            return string.Empty;
+
+        return CreateQuoteAdmonition(extractedContent, targetNotePath);
+    }
+
+    private string CreateQuoteAdmonition(string content, string targetPath)
+    {
+        var referenceLink = CreateReferenceLink(targetPath);
+        var quoteContent = $"{content}\n{string.Format(ReferenceFooter, referenceLink)}";
+        
+        return Adapter.AdaptAdmonition(quoteContent, QuoteIcon);
+    }
+
+    private string CreateReferenceLink(string targetPath)
+    {
+        var title = ObsidianNoteUtils.GetTitle(targetPath);
+        
+        if (!ObsidianNoteUtils.IsRequiredToBePublished(targetPath))
+            return title;
+        
+        var referencedPostPath = Adapter.AdaptPostPath(Adapter.ConvertMdLink2Relative(targetPath));
+        return $"[{title}]({referencedPostPath})";
+    }
+
+    private void LogFileNotFound(string relativePath, string absolutePath)
+    {
+        Console.WriteLine($"Not Found for relative path {relativePath}");
+        Console.WriteLine($"Not Found for absolute path {absolutePath}");
+    }
+    #endregion
 
     private string CleanBlockLinkMark(string content)
     {

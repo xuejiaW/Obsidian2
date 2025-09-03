@@ -143,4 +143,94 @@ public static class ObsidianNoteUtils
     {
         return $"{noteFolderPath}{notePath}".Replace("%20", " ");
     }
+
+    /// <summary>
+    /// Resolves the target path for an Obsidian link, trying both vault-based and relative paths.
+    /// </summary>
+    /// <param name="relativePath">Relative path from the link</param>
+    /// <param name="srcNotePath">Source note path for relative resolution</param>
+    /// <param name="vaultTempPath">Temporary vault directory path</param>
+    /// <returns>Resolved absolute path to the target file</returns>
+    /// <example>
+    /// <code>
+    /// // Resolve link path
+    /// var targetPath = ObsidianNoteUtils.ResolveTargetPath(
+    ///     "./articles/example.md", 
+    ///     @"C:\Vault\Notes\current.md",
+    ///     @"C:\Temp\Vault");
+    /// 
+    /// // First tries: C:\Temp\Vault\articles\example.md
+    /// // If not found: C:\Vault\Notes\articles\example.md
+    /// </code>
+    /// </example>
+    public static string ResolveTargetPath(string relativePath, string srcNotePath, string vaultTempPath)
+    {
+        var targetPath = GetNotePathBasedOnFolder(vaultTempPath, relativePath);
+        
+        if (!File.Exists(targetPath))
+        {
+            targetPath = GetAbsoluteLinkPath(srcNotePath, relativePath);
+        }
+        
+        return targetPath;
+    }
+
+    /// <summary>
+    /// Extracts content from an Obsidian note between a specific header and the next header.
+    /// </summary>
+    /// <param name="filePath">Absolute path to the Obsidian note file</param>
+    /// <param name="headerName">Name of the header to extract content from</param>
+    /// <returns>Content between the specified header and next header, or empty string if not found</returns>
+    /// <example>
+    /// <code>
+    /// // Extract content under "## Best Practices" section
+    /// var content = ObsidianNoteUtils.ExtractHeaderContent(
+    ///     @"C:\Notes\guide.md", 
+    ///     "Best Practices");
+    /// 
+    /// // Returns all content from "## Best Practices" to next header
+    /// </code>
+    /// </example>
+    public static string ExtractHeaderContent(string filePath, string headerName)
+    {
+        if (!File.Exists(filePath)) return string.Empty;
+
+        var lines = File.ReadLines(filePath).ToList();
+        var startIndex = lines.FindIndex(line => 
+            line.StartsWith("#") && line.EndsWith(headerName, StringComparison.OrdinalIgnoreCase));
+        
+        if (startIndex == -1) return string.Empty;
+        
+        var endIndex = lines.FindIndex(startIndex + 1, line => line.StartsWith("#"));
+        if (endIndex == -1) endIndex = lines.Count;
+        
+        var contentLines = lines.GetRange(startIndex, endIndex - startIndex);
+        return string.Join("\n", contentLines);
+    }
+
+    /// <summary>
+    /// Extracts content from an Obsidian note block based on block ID.
+    /// </summary>
+    /// <param name="filePath">Absolute path to the Obsidian note file</param>
+    /// <param name="blockId">Block ID to search for (e.g., "^abc123")</param>
+    /// <returns>Content of the line containing the block ID, with the ID removed</returns>
+    /// <example>
+    /// <code>
+    /// // Extract block content by ID
+    /// var content = ObsidianNoteUtils.ExtractBlockContent(
+    ///     @"C:\Notes\example.md", 
+    ///     "^abc123");
+    /// 
+    /// // If line is "This is important text ^abc123"
+    /// // Returns: "This is important text "
+    /// </code>
+    /// </example>
+    public static string ExtractBlockContent(string filePath, string blockId)
+    {
+        if (!File.Exists(filePath)) return string.Empty;
+
+        var lines = File.ReadAllLines(filePath);
+        var blockLine = lines.FirstOrDefault(line => line.EndsWith(blockId));
+        return blockLine?.Replace(blockId, "") ?? string.Empty;
+    }
 }
