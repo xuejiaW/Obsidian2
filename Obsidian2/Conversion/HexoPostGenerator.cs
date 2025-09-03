@@ -1,4 +1,6 @@
-﻿namespace Obsidian2;
+﻿using Obsidian2.Utilities;
+
+namespace Obsidian2;
 
 internal class HexoPostGenerator
 {
@@ -20,7 +22,7 @@ internal class HexoPostGenerator
         if (!noteAssetsDir.Exists) return postPath;
         var postAssetsDir = new DirectoryInfo(postPath.Replace(".md", ""));
         if (postAssetsDir.Exists) postAssetsDir.Delete(true);
-        await noteAssetsDir.DeepCopy(postAssetsDir.FullName);
+        await FileSystemUtils.DeepCopyDirectory(noteAssetsDir, postAssetsDir.FullName);
 
         Directory.GetFiles(postAssetsDir.FullName, "*.*", SearchOption.AllDirectories).ToList().ForEach(file =>
         {

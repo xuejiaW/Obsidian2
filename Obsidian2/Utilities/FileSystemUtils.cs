@@ -97,4 +97,55 @@ public static class FileSystemUtils
             Directory.CreateDirectory(directoryPath);
         }
     }
+
+    /// <summary>
+    /// Recursively copies a directory and all its contents to a destination directory with optional ignore filtering.
+    /// </summary>
+    /// <param name="sourceDirectory">Source directory to copy from</param>
+    /// <param name="destinationDir">Destination directory path</param>
+    /// <param name="ignoreList">Optional list of path patterns to ignore during copying</param>
+    /// <returns>Task representing the asynchronous copy operation</returns>
+    /// <example>
+    /// <code>
+    /// // Copy entire directory
+    /// await FileSystemUtils.DeepCopyDirectory(@"C:\Source", @"C:\Destination");
+    ///
+    /// // Copy with ignore patterns
+    /// var ignoreList = new List&lt;string&gt; { ".git", "node_modules", ".tmp" };
+    /// await FileSystemUtils.DeepCopyDirectory(@"C:\Project", @"C:\Backup", ignoreList);
+    /// </code>
+    /// </example>
+    public static async Task DeepCopyDirectory(DirectoryInfo sourceDirectory, string destinationDir,
+                                               List<string> ignoreList = null)
+    {
+        if (string.IsNullOrEmpty(destinationDir)) return;
+        if (!Directory.Exists(destinationDir)) Directory.CreateDirectory(destinationDir);
+
+        Directory.GetDirectories(sourceDirectory.FullName, "*", SearchOption.AllDirectories)
+                 .Where(dir => ignoreList == null || !ignoreList.Any(dir.Contains)).ToList()
+                 .ForEach(dir =>
+                  {
+                      Directory.CreateDirectory(dir.Replace(sourceDirectory.FullName, destinationDir));
+                  });
+
+        List<string> files = Directory.GetFiles(sourceDirectory.FullName, "*.*", SearchOption.AllDirectories)
+                                      .Where(path => ignoreList == null || !ignoreList.Any(path.Contains)).ToList();
+
+        IEnumerable<Task> tasks = files.Select(file => Task.Run(async () =>
+        {
+            await CopyFileInternal(file);
+        }));
+
+        await Task.WhenAll(tasks);
+
+        Task CopyFileInternal(string file)
+        {
+            string targetPath = file.Replace(sourceDirectory.FullName, destinationDir);
+            var info = new FileInfo(targetPath);
+            targetPath = Path.Join(info.Directory.FullName, info.Name.ToLower());
+
+            File.Copy(file, targetPath, true);
+            return Task.CompletedTask;
+        }
+    }
 }

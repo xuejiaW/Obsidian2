@@ -24,7 +24,7 @@ internal class Obsidian2HexoHandler
 
         Status.CreateStatus("Making backup", () =>
         {
-            obsidianVaultDir.DeepCopy(obsidianTempDir.FullName, ConfigurationMgr.configuration.ignoresPaths.ToList())
+            FileSystemUtils.DeepCopyDirectory(obsidianVaultDir, obsidianTempDir.FullName, ConfigurationMgr.configuration.ignoresPaths.ToList())
                             .Wait();
         });
 
@@ -110,7 +110,7 @@ internal class Obsidian2HexoHandler
 
             string postAssetsDir = HexoPostStyleAdapter.AdaptPostPath(hexoPostsDir + "\\" + noteName);
             if (Directory.Exists(postAssetsDir)) Directory.Delete(postAssetsDir, true);
-            await new DirectoryInfo(noteAssetsDir).DeepCopy(postAssetsDir);
+            await FileSystemUtils.DeepCopyDirectory(new DirectoryInfo(noteAssetsDir), postAssetsDir);
         }
     }
 
