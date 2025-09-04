@@ -39,7 +39,7 @@ public static class AdmonitionStyleUtils
             string sourceType = match.Groups[1].Value;
             string calloutType = mapping.GetValueOrDefault(sourceType, "info");
             string callout = match.Groups[2].Value.Trim();
-            return HexoUtils.AdaptAdmonition(callout, calloutType);
+            return HexoUtils.ConvertToHexoAdmonition(callout, calloutType);
         }
 
         return Regex.Replace(content, pattern, ReplaceAdmonition);
@@ -161,6 +161,6 @@ public static class AdmonitionStyleUtils
 
     private static string FormatLinesToAdmonition(string admonitionType, List<string> capturedLines)
     {
-        return HexoUtils.AdaptAdmonition(string.Join("\n", capturedLines), admonitionType);
+        return HexoUtils.ConvertToHexoAdmonition(string.Join("\n", capturedLines), admonitionType);
     }
 }

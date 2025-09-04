@@ -110,7 +110,7 @@ internal class Obsidian2HexoHandler
 
             if (!Path.Exists(noteAssetsDir)) return;
 
-            string postAssetsDir = HexoUtils.AdaptPostPath(hexoPostsDir + "\\" + noteName);
+            string postAssetsDir = HexoUtils.ConvertPathForHexoPost(hexoPostsDir + "\\" + noteName);
             if (Directory.Exists(postAssetsDir)) Directory.Delete(postAssetsDir, true);
             await FileSystemUtils.DeepCopyDirectory(new DirectoryInfo(noteAssetsDir), postAssetsDir);
         }

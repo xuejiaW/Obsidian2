@@ -13,7 +13,7 @@ internal class HexoPostGenerator
     {
         string noteName = Path.GetFileNameWithoutExtension(notePath);
 
-        string postPath = Path.Join(m_PostsDir.FullName, HexoUtils.AdaptPostPath(noteName) + ".md");
+        string postPath = Path.Join(m_PostsDir.FullName, HexoUtils.ConvertPathForHexoPost(noteName) + ".md");
 
         if (File.Exists(postPath)) File.Delete(postPath);
 
@@ -27,7 +27,7 @@ internal class HexoPostGenerator
 
         Directory.GetFiles(postAssetsDir.FullName, "*.*", SearchOption.AllDirectories).ToList().ForEach(file =>
         {
-            File.Move(file, HexoUtils.AdaptAssetPath(file));
+            File.Move(file, HexoUtils.ConvertPathForHexoAsset(file));
         });
         return postPath;
     }

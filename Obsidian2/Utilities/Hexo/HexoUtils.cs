@@ -19,22 +19,22 @@ public static class HexoUtils
     /// <example>
     /// <code>
     /// // Chinese characters to Pinyin conversion
-    /// var result1 = HexoUtils.AdaptPostPath("我的文章.md");
+    /// var result1 = HexoUtils.ConvertPathForHexoPost("我的文章.md");
     /// // Returns: "wo_de_wen_zhang.md"
     /// 
     /// // Mixed content conversion
-    /// var result2 = HexoUtils.AdaptPostPath("My 中文 Article.md");
+    /// var result2 = HexoUtils.ConvertPathForHexoPost("My 中文 Article.md");
     /// // Returns: "my_zhong_wen_article.md"
     /// 
     /// // Special characters handling
-    /// var result3 = HexoUtils.AdaptPostPath("Test Article (Draft).md");
+    /// var result3 = HexoUtils.ConvertPathForHexoPost("Test Article (Draft).md");
     /// // Returns: "test_article_(draft).md"
     /// </code>
     /// </example>
-    public static string AdaptPostPath(string path)
+    public static string ConvertPathForHexoPost(string path)
     {
-        string result = ConvertChineseToPinyin(path);
-        result = ConvertSpaceToUnderScore(result);
+        string result = TextUtils.ConvertChineseToPinyin(path);
+        result = TextUtils.ConvertSpaceToUnderscore(result);
         return result.ToLower();
     }
 
@@ -46,21 +46,21 @@ public static class HexoUtils
     /// <example>
     /// <code>
     /// // Basic asset path conversion
-    /// var result1 = HexoUtils.AdaptAssetPath("My Image.jpg");
+    /// var result1 = HexoUtils.ConvertPathForHexoAsset("My Image.jpg");
     /// // Returns: "my_image.jpg"
     /// 
     /// // Path with URL encoding
-    /// var result2 = HexoUtils.AdaptAssetPath("File%20Name.png");
+    /// var result2 = HexoUtils.ConvertPathForHexoAsset("File%20Name.png");
     /// // Returns: "file_name.png"
     /// 
     /// // Complex path conversion
-    /// var result3 = HexoUtils.AdaptAssetPath("assets/images/Screen Shot.png");
+    /// var result3 = HexoUtils.ConvertPathForHexoAsset("assets/images/Screen Shot.png");
     /// // Returns: "assets/images/screen_shot.png"
     /// </code>
     /// </example>
-    public static string AdaptAssetPath(string path)
+    public static string ConvertPathForHexoAsset(string path)
     {
-        string result = ConvertSpaceToUnderScore(path);
+        string result = TextUtils.ConvertSpaceToUnderscore(path);
         return result.ToLower();
     }
 
@@ -72,19 +72,19 @@ public static class HexoUtils
     /// <example>
     /// <code>
     /// // Convert absolute path to relative link
-    /// var result1 = HexoUtils.ConvertMdLink2Relative(@"C:\Blog\Posts\my-article.md");
+    /// var result1 = HexoUtils.ConvertMdLinkToRelative(@"C:\Blog\Posts\my-article.md");
     /// // Returns: "/my-article"
     /// 
     /// // Handle complex filenames
-    /// var result2 = HexoUtils.ConvertMdLink2Relative(@"D:\Notes\文章标题.md");
+    /// var result2 = HexoUtils.ConvertMdLinkToRelative(@"D:\Notes\文章标题.md");
     /// // Returns: "/文章标题"
     /// 
     /// // Nested path handling
-    /// var result3 = HexoUtils.ConvertMdLink2Relative(@"C:\Projects\blog\posts\tech\guide.md");
+    /// var result3 = HexoUtils.ConvertMdLinkToRelative(@"C:\Projects\blog\posts\tech\guide.md");
     /// // Returns: "/guide"
     /// </code>
     /// </example>
-    public static string ConvertMdLink2Relative(string filePath)
+    public static string ConvertMdLinkToRelative(string filePath)
     {
         return "/" + Path.GetFileNameWithoutExtension(filePath);
     }
@@ -102,7 +102,7 @@ public static class HexoUtils
     /// <example>
     /// <code>
     /// // Convert markdown file link
-    /// var result1 = HexoUtils.AdaptLink(
+    /// var result1 = HexoUtils.ConvertObsidianLinkToHexo(
     ///     "Reference Article", 
     ///     "../posts/my-guide.md#introduction",
     ///     @"C:\Vault\current.md",
@@ -110,7 +110,7 @@ public static class HexoUtils
     /// // Returns: "[Reference Article](/my-guide/#introduction)"
     /// 
     /// // Convert asset link with size specification
-    /// var result2 = HexoUtils.AdaptLink(
+    /// var result2 = HexoUtils.ConvertObsidianLinkToHexo(
     ///     "Screenshot|500", 
     ///     "assets/images/screenshot.png",
     ///     @"C:\Vault\article.md",
@@ -118,7 +118,7 @@ public static class HexoUtils
     /// // Returns: "[Screenshot](/images/screenshot.png)"
     /// 
     /// // Convert header fragment link
-    /// var result3 = HexoUtils.AdaptLink(
+    /// var result3 = HexoUtils.ConvertObsidianLinkToHexo(
     ///     "See above", 
     ///     "#conclusion",
     ///     @"C:\Vault\notes.md",
@@ -126,7 +126,7 @@ public static class HexoUtils
     /// // Returns: "[See above](/notes/#conclusion)"
     /// </code>
     /// </example>
-    public static string AdaptLink(string linkText, string linkRelativePath, string notePath, string postPath)
+    public static string ConvertObsidianLinkToHexo(string linkText, string linkRelativePath, string notePath, string postPath)
     {
         string fragment = "";
 
@@ -137,20 +137,20 @@ public static class HexoUtils
             {
                 string[] splitLink = linkRelativePath.Split("#", 2);
                 linkRelativePath = splitLink[0];
-                fragment = "/#" + AdaptTitleFragment(splitLink[1]);
+                fragment = "/#" + ConvertTitleToUrlFragment(splitLink[1]);
             }
 
             string absLinkPath = ObsidianNoteUtils.GetAbsoluteLinkPath(notePath, linkRelativePath);
             if (!ObsidianNoteUtils.IsRequiredToBePublished(absLinkPath)) return linkText;
 
             // As all posts are in the same directory, we can just use the file name as the link path.
-            linkRelativePath = ConvertMdLink2Relative(absLinkPath);
+            linkRelativePath = ConvertMdLinkToRelative(absLinkPath);
         }
 
         if (linkRelativePath.StartsWith("#"))
         {
-            fragment = "/#" + AdaptTitleFragment(linkRelativePath[1..]);
-            linkRelativePath = ConvertMdLink2Relative(postPath);
+            fragment = "/#" + ConvertTitleToUrlFragment(linkRelativePath[1..]);
+            linkRelativePath = ConvertMdLinkToRelative(postPath);
         }
 
         // For Obsidian Notes, if the note is ABC.md, the assets dir would be assets/abc
@@ -166,7 +166,7 @@ public static class HexoUtils
             linkText = RegexUtils.ReplacePattern(linkText, RegexUtils.trailingPipeNumbers, string.Empty);
         }
 
-        linkRelativePath = AdaptPostPath(linkRelativePath);
+        linkRelativePath = ConvertPathForHexoPost(linkRelativePath);
         return $"[{linkText}]({linkRelativePath}{fragment})";
     }
 
@@ -179,19 +179,19 @@ public static class HexoUtils
     /// <example>
     /// <code>
     /// // Create info admonition
-    /// var result1 = HexoUtils.AdaptAdmonition("This is important information.", "info");
+    /// var result1 = HexoUtils.ConvertToHexoAdmonition("This is important information.", "info");
     /// // Returns: "{% note info %}\nThis is important information.\n{% endnote %}"
     /// 
     /// // Create warning admonition
-    /// var result2 = HexoUtils.AdaptAdmonition("Be careful with this operation!", "warning");
+    /// var result2 = HexoUtils.ConvertToHexoAdmonition("Be careful with this operation!", "warning");
     /// // Returns: "{% note warning %}\nBe careful with this operation!\n{% endnote %}"
     /// 
     /// // Create multi-line admonition
-    /// var result3 = HexoUtils.AdaptAdmonition("Line 1\nLine 2\nLine 3", "success");
+    /// var result3 = HexoUtils.ConvertToHexoAdmonition("Line 1\nLine 2\nLine 3", "success");
     /// // Returns: "{% note success %}\nLine 1\nLine 2\nLine 3\n{% endnote %}"
     /// </code>
     /// </example>
-    public static string AdaptAdmonition(string calloutContent, string type)
+    public static string ConvertToHexoAdmonition(string calloutContent, string type)
     {
         return $"{{% note {type} %}}\n{calloutContent}\n{{% endnote %}}";
     }
@@ -199,64 +199,13 @@ public static class HexoUtils
 
     #region Private Helper Methods
     /// <summary>
-    /// Converts Chinese characters in text to Pinyin representation for URL-friendly paths.
-    /// </summary>
-    /// <param name="text">Text containing Chinese characters</param>
-    /// <returns>Text with Chinese characters converted to Pinyin, separated by underscores</returns>
-    private static string ConvertChineseToPinyin(string text)
-    {
-        var pinyinResult = new StringBuilder();
-
-        for (int i = 0; i < text.Length; i++)
-        {
-            char c = text[i];
-            if (PinyinHelper.IsChinese(c))
-            {
-                pinyinResult.Append(PinyinHelper.GetPinyin(c));
-                if (i < text.Length - 1 && !PinyinHelper.IsChinese(text[i + 1])) continue;
-                pinyinResult.Append('_');
-            }
-            else
-                pinyinResult.Append(c);
-        }
-
-        if (pinyinResult.Length == 0) return string.Empty;
-        if (pinyinResult[^1] == '_')
-            pinyinResult.Remove(pinyinResult.Length - 1, 1);
-
-        return pinyinResult.ToString();
-    }
-
-    /// <summary>
-    /// Converts spaces and URL-encoded spaces to underscores for path normalization.
-    /// </summary>
-    /// <param name="path">Path containing spaces or %20 encoded spaces</param>
-    /// <returns>Path with spaces converted to underscores</returns>
-    private static string ConvertSpaceToUnderScore(string path)
-    {
-        string result = path.Replace(" ", "_");
-        result = result.Replace("%20", "_");
-        return result;
-    }
-
-    /// <summary>
-    /// Converts dots to underscores for fragment identifiers that need to be URL-safe.
-    /// </summary>
-    /// <param name="path">Text containing dots</param>
-    /// <returns>Text with dots converted to underscores</returns>
-    private static string ConvertDotToUnderScore(string path)
-    {
-        return path.Replace(".", "_");
-    }
-
-    /// <summary>
-    /// Adapts title text for use in URL anchors by converting spaces and dots to underscores.
+    /// Converts title text to URL-safe fragment identifier by replacing spaces and dots with underscores.
     /// </summary>
     /// <param name="titleText">Original title text from markdown header</param>
     /// <returns>URL-safe fragment identifier</returns>
-    private static string AdaptTitleFragment(string titleText)
+    private static string ConvertTitleToUrlFragment(string titleText)
     {
-        return ConvertDotToUnderScore(ConvertSpaceToUnderScore(titleText));
+        return TextUtils.ConvertDotToUnderscore(TextUtils.ConvertSpaceToUnderscore(titleText));
     }
     #endregion
 }
