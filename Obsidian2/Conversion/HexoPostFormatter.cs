@@ -8,20 +8,16 @@ using Adapter = HexoPostStyleAdapter;
 
 internal class HexoPostFormatter
 {
-    #region Constants
     private const string QuoteIcon = "'fas fa-quote-left'";
     private const string ReferenceFooter = "———— {0}";
     private const string AssetsPrefix = "assets/";
-    #endregion
 
-    #region Fields
     private string m_SrcNotePath = null;
     private string m_DstPostPath = null;
-    #endregion
 
-    #region Properties
+    private enum LinkType { Header, Block }
+
     public string postPath => m_DstPostPath;
-    #endregion
 
     public HexoPostFormatter(string srcNotePath, string dstPostPath)
     {
@@ -34,45 +30,33 @@ internal class HexoPostFormatter
         string content = await File.ReadAllTextAsync(m_SrcNotePath);
         string ret = AdmonitionsFormatter.FormatCodeBlockStyle2ButterflyStyle(content);
         ret = AdmonitionsFormatter.FormatMkDocsStyle2ButterflyStyle(ret);
-        ret = FormatHeaderLink(ret, m_SrcNotePath);
-        ret = FormatBlockLink(ret, m_SrcNotePath);
-        ret = CleanBlockLinkMark(ret);
+        ret = Regex.Replace(content, RegexUtils.obsidianHeaderLink, match => ProcessObsidianLink(match, m_SrcNotePath, LinkType.Header));
+        ret = Regex.Replace(content, RegexUtils.obsidianBlockLink, match => ProcessObsidianLink(match, m_SrcNotePath, LinkType.Block));
+        ret = RegexUtils.ReplacePattern(content, RegexUtils.obsidianBlockId, string.Empty);
         ret = FormatMdLinkToHexoStyle(ret);
         ret = FormatHtmlImagePaths(ret);
         await File.WriteAllTextAsync(m_DstPostPath, ret);
     }
 
-    private string FormatHeaderLink(string content, string srcNotePath)
-    {
-        return Regex.Replace(content, RegexUtils.obsidianHeaderLink, match => 
-            ProcessObsidianLink(match, srcNotePath, LinkType.Header));
-    }
-
-    private string FormatBlockLink(string content, string srcNotePath)
-    {
-        return Regex.Replace(content, RegexUtils.obsidianBlockLink, match => 
-            ProcessObsidianLink(match, srcNotePath, LinkType.Block));
-    }
-
-    #region Link Processing Helpers
-    private enum LinkType { Header, Block }
 
     private string ProcessObsidianLink(Match match, string srcNotePath, LinkType linkType)
     {
         // Extract link components directly from regex match
         string relativePath = match.Groups[2].Value;
         string fragment = match.Groups[3].Value.Replace("%20", " ");
-        
+
         var targetNotePath = ObsidianNoteUtils.ResolveTargetPath(
             relativePath, srcNotePath, Obsidian2HexoHandler.obsidianTempDir.FullName);
-        
+
         if (!File.Exists(targetNotePath))
         {
-            LogFileNotFound(relativePath, targetNotePath);
+            Console.WriteLine($"Not Found for relative path {relativePath}");
+            Console.WriteLine($"Not Found for absolute path {targetNotePath}");
+
             return string.Empty;
         }
 
-        var extractedContent = linkType == LinkType.Header 
+        var extractedContent = linkType == LinkType.Header
             ? ObsidianNoteUtils.ExtractHeaderContent(targetNotePath, fragment)
             : ObsidianNoteUtils.ExtractBlockContent(targetNotePath, fragment);
 
@@ -86,31 +70,19 @@ internal class HexoPostFormatter
     {
         var referenceLink = CreateReferenceLink(targetPath);
         var quoteContent = $"{content}\n{string.Format(ReferenceFooter, referenceLink)}";
-        
+
         return Adapter.AdaptAdmonition(quoteContent, QuoteIcon);
     }
 
     private string CreateReferenceLink(string targetPath)
     {
         var title = ObsidianNoteUtils.GetTitle(targetPath);
-        
+
         if (!ObsidianNoteUtils.IsRequiredToBePublished(targetPath))
             return title;
-        
+
         var referencedPostPath = Adapter.AdaptPostPath(Adapter.ConvertMdLink2Relative(targetPath));
         return $"[{title}]({referencedPostPath})";
-    }
-
-    private void LogFileNotFound(string relativePath, string absolutePath)
-    {
-        Console.WriteLine($"Not Found for relative path {relativePath}");
-        Console.WriteLine($"Not Found for absolute path {absolutePath}");
-    }
-    #endregion
-
-    private string CleanBlockLinkMark(string content)
-    {
-        return RegexUtils.ReplacePattern(content, RegexUtils.obsidianBlockId, string.Empty);
     }
 
     private string FormatMdLinkToHexoStyle(string content)
@@ -130,14 +102,14 @@ internal class HexoPostFormatter
             string beforeSrc = match.Groups[1].Value;
             string srcPath = match.Groups[2].Value;
             string afterSrc = match.Groups[3].Value;
-            
+
             if (srcPath.StartsWith(AssetsPrefix))
             {
                 srcPath = srcPath.Substring(AssetsPrefix.Length);
             }
-            
+
             string processedPath = "/" + Adapter.AdaptAssetPath(srcPath);
-            
+
             return $"<img {beforeSrc}src=\"{processedPath}\"{afterSrc}>";
         });
     }
