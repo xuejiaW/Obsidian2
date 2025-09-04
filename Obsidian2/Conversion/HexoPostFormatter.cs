@@ -1,10 +1,9 @@
 ﻿using System.Text.RegularExpressions;
 using Obsidian2.Utilities;
 using Obsidian2.Utilities.Obsidian;
+using Obsidian2.Utilities.Hexo;
 
 namespace Obsidian2;
-
-using Adapter = HexoPostStyleAdapter;
 
 internal class HexoPostFormatter
 {
@@ -71,7 +70,7 @@ internal class HexoPostFormatter
         var referenceLink = CreateReferenceLink(targetPath);
         var quoteContent = $"{content}\n{string.Format(ReferenceFooter, referenceLink)}";
 
-        return Adapter.AdaptAdmonition(quoteContent, QuoteIcon);
+        return HexoUtils.AdaptAdmonition(quoteContent, QuoteIcon);
     }
 
     private string CreateReferenceLink(string targetPath)
@@ -81,7 +80,7 @@ internal class HexoPostFormatter
         if (!ObsidianNoteUtils.IsRequiredToBePublished(targetPath))
             return title;
 
-        var referencedPostPath = Adapter.AdaptPostPath(Adapter.ConvertMdLink2Relative(targetPath));
+        var referencedPostPath = HexoUtils.AdaptPostPath(HexoUtils.ConvertMdLink2Relative(targetPath));
         return $"[{title}]({referencedPostPath})";
     }
 
@@ -91,7 +90,7 @@ internal class HexoPostFormatter
         {
             string linkText = match.Groups[1].Value;
             string linkRelativePath = match.Groups[2].Value;
-            return Adapter.AdaptLink(linkText, linkRelativePath, m_SrcNotePath, m_DstPostPath);
+            return HexoUtils.AdaptLink(linkText, linkRelativePath, m_SrcNotePath, m_DstPostPath);
         });
     }
 
@@ -108,7 +107,7 @@ internal class HexoPostFormatter
                 srcPath = srcPath.Substring(AssetsPrefix.Length);
             }
 
-            string processedPath = "/" + Adapter.AdaptAssetPath(srcPath);
+            string processedPath = "/" + HexoUtils.AdaptAssetPath(srcPath);
 
             return $"<img {beforeSrc}src=\"{processedPath}\"{afterSrc}>";
         });

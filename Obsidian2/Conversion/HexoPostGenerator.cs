@@ -1,4 +1,5 @@
 ﻿using Obsidian2.Utilities;
+using Obsidian2.Utilities.Hexo;
 
 namespace Obsidian2;
 
@@ -12,7 +13,7 @@ internal class HexoPostGenerator
     {
         string noteName = Path.GetFileNameWithoutExtension(notePath);
 
-        string postPath = Path.Join(m_PostsDir.FullName, HexoPostStyleAdapter.AdaptPostPath(noteName) + ".md");
+        string postPath = Path.Join(m_PostsDir.FullName, HexoUtils.AdaptPostPath(noteName) + ".md");
 
         if (File.Exists(postPath)) File.Delete(postPath);
 
@@ -26,7 +27,7 @@ internal class HexoPostGenerator
 
         Directory.GetFiles(postAssetsDir.FullName, "*.*", SearchOption.AllDirectories).ToList().ForEach(file =>
         {
-            File.Move(file, HexoPostStyleAdapter.AdaptAssetPath(file));
+            File.Move(file, HexoUtils.AdaptAssetPath(file));
         });
         return postPath;
     }

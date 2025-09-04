@@ -1,6 +1,7 @@
 ﻿using Obsidian2.ConsoleUI;
 using Obsidian2.Utilities;
 using Obsidian2.Utilities.Obsidian;
+using Obsidian2.Utilities.Hexo;
 using Progress = Obsidian2.ConsoleUI.Progress;
 
 namespace Obsidian2;
@@ -109,7 +110,7 @@ internal class Obsidian2HexoHandler
 
             if (!Path.Exists(noteAssetsDir)) return;
 
-            string postAssetsDir = HexoPostStyleAdapter.AdaptPostPath(hexoPostsDir + "\\" + noteName);
+            string postAssetsDir = HexoUtils.AdaptPostPath(hexoPostsDir + "\\" + noteName);
             if (Directory.Exists(postAssetsDir)) Directory.Delete(postAssetsDir, true);
             await FileSystemUtils.DeepCopyDirectory(new DirectoryInfo(noteAssetsDir), postAssetsDir);
         }
