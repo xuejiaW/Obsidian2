@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Text;
 using System.Diagnostics;
 using System.Web;
+using Obsidian2.Utilities;
 
 namespace Obsidian2;
 
@@ -14,8 +15,8 @@ internal class ZhihuPostFormatter
     private string _outputFilePath;
     
     // 正则表达式，用于匹配行内公式和块级公式
-    private static readonly Regex _inlineLatexRegex = new Regex(@"(?<!\$)\$(?!\$)(.+?)(?<!\$)\$(?!\$)", RegexOptions.Compiled);
-    private static readonly Regex _blockLatexRegex = new Regex(@"\$\$([\s\S]*?)\$\$", RegexOptions.Compiled);
+    private static readonly Regex _inlineLatexRegex = RegexUtils.inlineLaTeXRegex;
+    private static readonly Regex _blockLatexRegex = RegexUtils.blockLaTeXRegex;
 
     public ZhihuPostFormatter(FileInfo inputFile, DirectoryInfo outputDir)
     {

@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using Obsidian2.Utilities;
 using Obsidian2.Utilities.Obsidian;
 
 namespace Obsidian2;
@@ -8,14 +9,9 @@ using Adapter = HexoPostStyleAdapter;
 internal class HexoPostFormatter
 {
     #region Constants
-    private static class RegexPatterns
-    {
-        public const string HeaderLink = @"!\[(.*?)\]\((.*?.md)#(?!\^)(.*?)\)";
-        public const string BlockLink = @"!\[(.*?)\]\((.*?.md)#(\^[a-zA-Z0-9]{6})\)";
-    }
-
     private const string QuoteIcon = "'fas fa-quote-left'";
     private const string ReferenceFooter = "———— {0}";
+    private const string AssetsPrefix = "assets/";
     #endregion
 
     #region Fields
@@ -48,13 +44,13 @@ internal class HexoPostFormatter
 
     private string FormatHeaderLink(string content, string srcNotePath)
     {
-        return Regex.Replace(content, RegexPatterns.HeaderLink, match => 
+        return Regex.Replace(content, RegexUtils.obsidianHeaderLink, match => 
             ProcessObsidianLink(match, srcNotePath, LinkType.Header));
     }
 
     private string FormatBlockLink(string content, string srcNotePath)
     {
-        return Regex.Replace(content, RegexPatterns.BlockLink, match => 
+        return Regex.Replace(content, RegexUtils.obsidianBlockLink, match => 
             ProcessObsidianLink(match, srcNotePath, LinkType.Block));
     }
 
@@ -114,46 +110,35 @@ internal class HexoPostFormatter
 
     private string CleanBlockLinkMark(string content)
     {
-        string pattern = @"(\^[a-zA-Z0-9]{6})";
-        return Regex.Replace(content, pattern, "");
+        return RegexUtils.ReplacePattern(content, RegexUtils.obsidianBlockId, string.Empty);
     }
 
     private string FormatMdLinkToHexoStyle(string content)
     {
-        string linkPattern = @"\[(.*?)\]\((?!http)(.*?)\)";
-        string ret = Regex.Replace(content, linkPattern, ReplaceLink);
-        return ret;
-
-        string ReplaceLink(Match match)
+        return RegexUtils.ReplacePattern(content, RegexUtils.markdownLink, match =>
         {
             string linkText = match.Groups[1].Value;
             string linkRelativePath = match.Groups[2].Value;
-
             return Adapter.AdaptLink(linkText, linkRelativePath, m_SrcNotePath, m_DstPostPath);
-        }
+        });
     }
 
     private string FormatHtmlImagePaths(string content)
     {
-        string pattern = @"<img\s+([^>]*?)src=""([^""]*?)""([^>]*?)>";
-        return Regex.Replace(content, pattern, ReplaceImagePath);
-
-        string ReplaceImagePath(Match match)
+        return RegexUtils.ReplacePattern(content, RegexUtils.htmlImage, match =>
         {
             string beforeSrc = match.Groups[1].Value;
             string srcPath = match.Groups[2].Value;
             string afterSrc = match.Groups[3].Value;
             
-            if (srcPath.StartsWith("assets/"))
+            if (srcPath.StartsWith(AssetsPrefix))
             {
-                srcPath = srcPath.Substring("assets/".Length);
+                srcPath = srcPath.Substring(AssetsPrefix.Length);
             }
             
-            string processedPath = Adapter.AdaptAssetPath(srcPath);
-            
-            processedPath = "/" + processedPath;
+            string processedPath = "/" + Adapter.AdaptAssetPath(srcPath);
             
             return $"<img {beforeSrc}src=\"{processedPath}\"{afterSrc}>";
-        }
+        });
     }
 }

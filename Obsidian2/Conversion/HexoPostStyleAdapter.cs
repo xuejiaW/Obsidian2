@@ -83,8 +83,7 @@ internal static class HexoPostStyleAdapter
 
             // if link text is end with sth like |500, delete the |500 part
             // Obsidian use this to specify the size of the image, but Hexo doesn't need it.
-            var regex = new Regex(@"\|\d+$");
-            linkText = regex.Replace(linkText, "");
+            linkText = RegexUtils.ReplacePattern(linkText, RegexUtils.trailingPipeNumbers, string.Empty);
         }
 
         linkRelativePath = AdaptPostPath(linkRelativePath);

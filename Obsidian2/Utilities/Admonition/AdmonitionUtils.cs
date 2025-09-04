@@ -24,8 +24,7 @@ public static class AdmonitionUtils
     /// </example>
     public static string ClearAdmonitionMark(string line)
     {
-        string pattern = @"^(\s*>\s*)+";
-        return Regex.Replace(line, pattern, "");
+        return RegexUtils.ReplacePattern(line, RegexUtils.admonitionQuoteMarkers, string.Empty);
     }
 
     /// <summary>
@@ -50,8 +49,7 @@ public static class AdmonitionUtils
     /// </example>
     public static bool IsAdmonitionBeginning(string line, out string type)
     {
-        string pattern = @"^(\s*>\s*)+\[!([a-zA-Z]+)]";
-        Match match = Regex.Match(line, pattern);
+        var match = RegexUtils.GetMatch(line, @"^(\s*>\s*)+\[!([a-zA-Z]+)]");
         type = match.Success ? match.Groups[2].Value : null;
         return match.Success;
     }
@@ -79,8 +77,7 @@ public static class AdmonitionUtils
     /// </example>
     public static bool IsAdmonitionLine(string line, out int level)
     {
-        string pattern = @"^(\s*>\s*)+";
-        Match match = Regex.Match(line, pattern);
+        var match = RegexUtils.GetMatch(line, RegexUtils.admonitionQuoteMarkers);
         level = 0;
         
         for (int i = 0; i != line.Length; ++i)

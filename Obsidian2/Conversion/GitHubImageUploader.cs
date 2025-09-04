@@ -347,10 +347,10 @@ public class GitHubImageUploader
         string sanitized = new(folderName.Where(c => !invalidChars.Contains(c)).ToArray());
 
         // 将空格和特殊字符替换为下划线
-        sanitized = Regex.Replace(sanitized, @"[\s\-\.\[\]\(\)]", "_");
+        sanitized = RegexUtils.ReplacePattern(sanitized, RegexUtils.filenameSanitization, "_");
 
         // 移除多余的下划线
-        sanitized = Regex.Replace(sanitized, @"_{2,}", "_");
+        sanitized = RegexUtils.ReplacePattern(sanitized, @"_{2,}", "_");
 
         // 移除开头和结尾的下划线
         sanitized = sanitized.Trim('_');

@@ -36,8 +36,7 @@ public static class MarkdownUtils
     {
         if (string.IsNullOrEmpty(content)) return string.Empty;
 
-        string htmlPattern = @"<img\s+(?:src=""(.*?)"")?(?:\s+alt=""(.*?)"")?[^>]*>";
-        content = Regex.Replace(content, htmlPattern, match =>
+        content = RegexUtils.ReplacePattern(content, RegexUtils.htmlImageWithAttributes, match =>
         {
             string src = match.Groups[1].Success ? match.Groups[1].Value : "";
             string alt = match.Groups[2].Success ? match.Groups[2].Value : "";
@@ -69,8 +68,7 @@ public static class MarkdownUtils
     /// </example>
     public static string FixMarkdownImageLinks(string content)
     {
-        string mdPattern = @"!\[(.*?)\]\((.*?)\)";
-        return Regex.Replace(content, mdPattern, match =>
+        return RegexUtils.ReplacePattern(content, RegexUtils.markdownImage, match =>
         {
             string alt = match.Groups[1].Value;
             string url = match.Groups[2].Value;
@@ -99,7 +97,7 @@ public static class MarkdownUtils
     /// </example>
     public static string FormatMarkdownTables(string content)
     {
-        return Regex.Replace(content, @"\|\n", "|\n\n");
+        return RegexUtils.ReplacePattern(content, RegexUtils.markdownTableRow, "|\n\n");
     }
 
     /// <summary>
