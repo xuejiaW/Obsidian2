@@ -29,9 +29,9 @@ internal class HexoPostFormatter
         string content = await File.ReadAllTextAsync(m_SrcNotePath);
         string ret = AdmonitionsFormatter.FormatCodeBlockStyle2ButterflyStyle(content);
         ret = AdmonitionsFormatter.FormatMkDocsStyle2ButterflyStyle(ret);
-        ret = Regex.Replace(content, RegexUtils.obsidianHeaderLink, match => ProcessObsidianLink(match, m_SrcNotePath, LinkType.Header));
-        ret = Regex.Replace(content, RegexUtils.obsidianBlockLink, match => ProcessObsidianLink(match, m_SrcNotePath, LinkType.Block));
-        ret = RegexUtils.ReplacePattern(content, RegexUtils.obsidianBlockId, string.Empty);
+        ret = Regex.Replace(ret, RegexUtils.obsidianHeaderLink, match => ProcessObsidianLink(match, m_SrcNotePath, LinkType.Header));
+        ret = Regex.Replace(ret, RegexUtils.obsidianBlockLink, match => ProcessObsidianLink(match, m_SrcNotePath, LinkType.Block));
+        ret = RegexUtils.ReplacePattern(ret, RegexUtils.obsidianBlockId, string.Empty);
         ret = FormatMdLinkToHexoStyle(ret);
         ret = FormatHtmlImagePaths(ret);
         await File.WriteAllTextAsync(m_DstPostPath, ret);

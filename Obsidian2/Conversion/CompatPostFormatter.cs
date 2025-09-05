@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using System.Diagnostics;
 using Obsidian2.Utilities;
 
 namespace Obsidian2;
