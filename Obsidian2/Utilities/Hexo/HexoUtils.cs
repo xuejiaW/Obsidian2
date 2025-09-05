@@ -195,9 +195,81 @@ public static class HexoUtils
     {
         return $"{{% note {type} %}}\n{calloutContent}\n{{% endnote %}}";
     }
+
+    /// <summary>
+    /// Creates a Hexo post bundle by copying the note file and associated assets to the posts directory.
+    /// </summary>
+    /// <param name="notePath">Absolute path to the source Obsidian note file</param>
+    /// <param name="postsDirectory">Target directory for Hexo posts</param>
+    /// <returns>Absolute path to the created Hexo post file</returns>
+    /// <example>
+    /// <code>
+    /// // Create a Hexo post bundle
+    /// var result = await HexoUtils.CreateHexoPostBundle(
+    ///     @"C:\Vault\MyNote.md",
+    ///     new DirectoryInfo(@"C:\Blog\source\_posts"));
+    /// // Returns: @"C:\Blog\source\_posts\my_note.md"
+    /// 
+    /// // The method also copies associated assets from:
+    /// // C:\Vault\assets\MyNote\ → C:\Blog\source\_posts\my_note\
+    /// </code>
+    /// </example>
+    public static async Task<string> CreateHexoPostBundle(string notePath, DirectoryInfo postsDirectory)
+    {
+        string noteName = Path.GetFileNameWithoutExtension(notePath);
+        string postPath = Path.Join(postsDirectory.FullName, ConvertPathForHexoPost(noteName) + ".md");
+
+        // Remove existing post if it exists
+        if (File.Exists(postPath)) 
+        {
+            File.Delete(postPath);
+        }
+
+        // Copy the note file to posts directory
+        File.Copy(notePath, postPath);
+
+        // Handle associated assets
+        await CopyNoteAssets(notePath, postPath);
+
+        return postPath;
+    }
     #endregion
 
     #region Private Helper Methods
+    /// <summary>
+    /// Copies and renames assets associated with a note to the corresponding Hexo post directory.
+    /// </summary>
+    /// <param name="notePath">Path to the source note file</param>
+    /// <param name="postPath">Path to the target post file</param>
+    private static async Task CopyNoteAssets(string notePath, string postPath)
+    {
+        string noteName = Path.GetFileNameWithoutExtension(notePath);
+        var noteAssetsDir = new DirectoryInfo(Path.Join($"{Path.GetDirectoryName(notePath)}\\assets\\{noteName}"));
+        
+        if (!noteAssetsDir.Exists) return;
+
+        var postAssetsDir = new DirectoryInfo(postPath.Replace(".md", ""));
+        
+        // Remove existing post assets directory if it exists
+        if (postAssetsDir.Exists) 
+        {
+            postAssetsDir.Delete(true);
+        }
+
+        // Copy assets directory
+        await FileSystemUtils.DeepCopyDirectory(noteAssetsDir, postAssetsDir.FullName);
+
+        // Rename all asset files to Hexo-compatible format
+        var assetFiles = Directory.GetFiles(postAssetsDir.FullName, "*.*", SearchOption.AllDirectories);
+        foreach (string file in assetFiles)
+        {
+            string hexoCompatiblePath = ConvertPathForHexoAsset(file);
+            if (file != hexoCompatiblePath)
+            {
+                File.Move(file, hexoCompatiblePath);
+            }
+        }
+    }
     /// <summary>
     /// Converts title text to URL-safe fragment identifier by replacing spaces and dots with underscores.
     /// </summary>
